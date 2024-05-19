@@ -16,9 +16,33 @@ namespace Pick.Mode
         /**
          * Returns whether the pick mode was changed in this frame
          */
-        public bool PickModeChanged()
+        public bool Changed()
         {
             return _prevValue != Value;
+        }
+
+        /**
+         * Returns whether the pick mode was changed in the last frame from parameter "from" to parameter "to"
+         */
+        public bool Changed(PickMode from, PickMode to)
+        {
+            return ChangedFrom(from) && ChangedTo(to);
+        }
+
+        /**
+        * Returns whether the pick mode was changed in the last frame from parameter "from"
+        */
+        public bool ChangedFrom(PickMode pickMode)
+        {
+            return _prevValue == pickMode && Value != pickMode;
+        }
+
+        /**
+        * Returns whether the pick mode was changed in the last frame to parameter "to"
+        */
+        public bool ChangedTo(PickMode pickMode)
+        {
+            return _prevValue != pickMode && Value == pickMode;
         }
 
         private void Update()
