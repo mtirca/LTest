@@ -20,7 +20,7 @@ namespace Pick
 
         void Update()
         {
-            if (!_picker.PickModeChanged()) return;
+            if (!_picker.Changed()) return;
             LoadCrosshair();
         }
 

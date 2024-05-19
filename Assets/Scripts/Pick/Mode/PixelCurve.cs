@@ -21,7 +21,7 @@ namespace Pick.Mode
 
         void Update()
         {
-            if (_picker.PickModeChanged())
+            if (_picker.Changed())
             {
                 ClearHitPoints();
             }
