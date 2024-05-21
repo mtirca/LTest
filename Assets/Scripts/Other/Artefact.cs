@@ -1,4 +1,5 @@
-using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using Pick.Mode;
 using UnityEngine;
 
@@ -13,10 +14,19 @@ namespace Other
         private Mesh _mesh;
         private Texture2D _originalTexture;
 
-        public List<Label> Labels = new();
+        //todo event on collection works?
+        public ObservableCollection<Label> Labels { get; private set; }
+
+        private void ListChanged(object sender, NotifyCollectionChangedEventArgs args)
+        {
+            ResetMeshColor();
+        }
 
         private void Awake()
         {
+            Labels = new ObservableCollection<Label>();
+            Labels.CollectionChanged += ListChanged;
+
             #region Singleton
 
             if (Instance == null)
@@ -49,6 +59,7 @@ namespace Other
             #endregion
         }
 
+        //todo still need?
         public void RefreshTexture()
         {
             _renderer.material.mainTexture = Instantiate(_originalTexture);
@@ -56,11 +67,12 @@ namespace Other
 
         public void ResetMeshColor()
         {
-            Color[] colors = new Color[_mesh.vertices.Length];
-            for (int i = 0; i < colors.Length; i++)
+            var colors = new Color[_mesh.vertices.Length];
+            for (var i = 0; i < colors.Length; i++)
             {
                 colors[i] = Color.white;
             }
+
             _mesh.colors = colors;
         }
     }
