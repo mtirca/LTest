@@ -10,7 +10,7 @@ namespace Pick.Mode
         private Camera _mainCamera;
         private Vector3 _center;
         private Label _activeLabel;
-        
+
         // in screen space
         public double brushRadius = 15;
         
@@ -22,19 +22,25 @@ namespace Pick.Mode
             _activeLabel = new Label();
         }
 
+        private void Start()
+        {
+            _picker.OnPickModeChanged += ResetBrush;
+        }
+
+        private void ResetBrush(object sender, Picker.OnPickModeChangedEventArgs args)
+        {
+            if(args.OldValue != PickMode.Brush) return;
+            Artefact.Instance.ResetMeshColor();
+            _activeLabel = new Label();
+        }
+        
         private void Update()
         {
-            if (_picker.ChangedFrom(PickMode.Brush))
-            {
-                Artefact.Instance.ResetMeshColor();
-                _activeLabel = new Label();
-                return;
-            }
-
+            if(_picker.Value != PickMode.Brush) return;
+            
             if (Input.GetKeyDown(KeyCode.Return))
             {
                 Artefact.Instance.Labels.Add(_activeLabel);
-                Artefact.Instance.ResetMeshColor();
                 _activeLabel = new Label();
                 return;
             }
@@ -52,7 +58,7 @@ namespace Pick.Mode
             for (var i = 0; i < vertices.Length; i++)
             {
                 // check it hasn't been painted already
-                if(colors[i] == _activeLabel.Highlight) continue;
+                if(colors[i] == _activeLabel.Color) continue;
                 
                 Vector3 worldVertex = aTransform.TransformPoint(vertices[i]);
 
@@ -92,7 +98,7 @@ namespace Pick.Mode
                 }
                 #endregion
                 
-                colors[i] = _activeLabel.Highlight;
+                colors[i] = _activeLabel.Color;
                 
                 _activeLabel.Vertices.Add(vertices[i]);
             }

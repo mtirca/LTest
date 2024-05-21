@@ -1,18 +1,19 @@
 using System.Collections.Generic;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace Pick.Mode
 {
     public class Label
     {
         public string Text;
-        public Color Highlight;
+        public Color Color;
         public List<Vector3> Vertices;
 
         public Label()
         {
-            Highlight = RandomColor();
-            Text = Highlight.ToString();
+            Color = RandomColor();
+            Text = Color.ToString();
             Vertices = new List<Vector3>();
         }
 

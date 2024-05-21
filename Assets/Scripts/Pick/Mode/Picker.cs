@@ -5,8 +5,33 @@ namespace Pick.Mode
 {
     public class Picker : MonoBehaviour
     {
-        [NonSerialized] public PickMode Value = PickMode.Pixel;
+        [NonSerialized] private PickMode _value = PickMode.Pixel;
+
+        public PickMode Value
+        {
+            get => _value;
+            private set
+            {
+                var oldValue = _value;
+                _value = value;
+                if (oldValue != value)
+                {
+                    OnPickModeChanged?.Invoke(this,
+                        new OnPickModeChangedEventArgs { OldValue = oldValue, NewValue = value });
+                }
+            }
+        }
+
+        //todo do we still need _prevValue and Changed/From/To() methods?
         private PickMode _prevValue;
+
+        public event EventHandler<OnPickModeChangedEventArgs> OnPickModeChanged;
+
+        public class OnPickModeChangedEventArgs
+        {
+            public PickMode OldValue;
+            public PickMode NewValue;
+        }
 
         private void Awake()
         {
