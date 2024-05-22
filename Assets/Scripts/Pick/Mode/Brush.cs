@@ -3,21 +3,20 @@ using Other;
 
 namespace Pick.Mode
 {
-    [RequireComponent(typeof(Camera))]
     public class Brush : MonoBehaviour
     {
         private Picker _picker;
         private Camera _mainCamera;
         private Vector3 _center;
         private Label _activeLabel;
-
+        
         // in screen space
         public double brushRadius = 15;
         
         private void Awake()
         {
             _mainCamera = Camera.main;
-            _picker = _mainCamera.GetComponent<Picker>();
+            _picker = GetComponentInParent<Picker>();
             _center = _mainCamera.ViewportToScreenPoint(new Vector3(0.5f, 0.5f, 0));
             _activeLabel = new Label();
         }
@@ -40,6 +39,8 @@ namespace Pick.Mode
             
             if (Input.GetKeyDown(KeyCode.Return))
             {
+                //todo should i return or just get out of if()?
+                if(_activeLabel.Vertices.Count == 0) return;
                 Artefact.Instance.Labels.Add(_activeLabel);
                 _activeLabel = new Label();
                 return;
@@ -47,6 +48,7 @@ namespace Pick.Mode
 
             if (!Input.GetMouseButton(0)) return;
 
+            //todo add as readonly field to artefact instance
             var aTransform = Artefact.Instance.transform;
             var aMeshCollider = Artefact.Instance.GetComponent<MeshCollider>();
             var aMesh = aMeshCollider.sharedMesh;
@@ -55,6 +57,7 @@ namespace Pick.Mode
             var cameraPosition = _mainCamera.transform.position;
             var triangles = aMesh.triangles;
             
+            //todo iterate only through unpainted vertices, not through all while asking if theyre unpainted
             for (var i = 0; i < vertices.Length; i++)
             {
                 // check it hasn't been painted already

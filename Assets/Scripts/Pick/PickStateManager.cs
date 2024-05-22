@@ -5,28 +5,26 @@ using Pick.Mode;
 
 namespace Pick
 {
-    [RequireComponent(typeof(Image))]
     public class PickStateManager : MonoBehaviour
     {
         private Picker _picker;
-        private Image _crosshair;
-        //todo panels work?
+        
+        [SerializeField] private Image crosshair;
         [SerializeField] private GameObject brushPanel;
         [SerializeField] private GameObject pixelCurvePanel;
 
         private void Awake()
         {
-            _crosshair = gameObject.GetComponent<Image>();
-            _picker = Camera.main.GetComponent<Picker>();
-            _picker.OnPickModeChanged += ReloadUI;
+            _picker = GetComponent<Picker>();
+            _picker.OnPickModeChanged += LoadPicker;
             LoadCrosshair(_picker.Value);
-            LoadPickerPanel(_picker.Value);
+            ActivatePicker(_picker.Value);
         }
 
-        private void ReloadUI(object sender, Picker.OnPickModeChangedEventArgs args)
+        private void LoadPicker(object sender, Picker.OnPickModeChangedEventArgs args)
         {
             LoadCrosshair(_picker.Value);
-            LoadPickerPanel(_picker.Value);
+            ActivatePicker(_picker.Value);
         }
 
         //todo move to resources util class
@@ -45,10 +43,10 @@ namespace Pick
         private void LoadCrosshair(PickMode pickMode)
         {
             var crosshairTex = Resources.Load<Sprite>(GetCrosshairPath(pickMode));
-            _crosshair.sprite = crosshairTex;
+            crosshair.sprite = crosshairTex;
         }
 
-        private void LoadPickerPanel(PickMode pickMode)
+        private void ActivatePicker(PickMode pickMode)
         {
             switch (pickMode)
             {
