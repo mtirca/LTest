@@ -1,11 +1,13 @@
+using System;
 using System.Collections.Specialized;
 using System.Linq;
 using Other;
 using Pick.Mode;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Pick
+namespace UI
 {
     public class BrushUI : MonoBehaviour
     {
@@ -24,7 +26,7 @@ namespace Pick
             foreach (var newLabel in newLabels)
             {
                 var uiLabel = Instantiate(labelPrefab, contentHolder);
-                var text = uiLabel.GetComponentInChildren<Text>();
+                var text = uiLabel.GetComponentInChildren<TMP_Text>();
                 var image = uiLabel.GetComponentInChildren<Image>();
                 text.text = newLabel.Text;
                 image.color = newLabel.Color;

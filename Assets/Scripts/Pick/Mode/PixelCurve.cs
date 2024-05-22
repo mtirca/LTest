@@ -1,31 +1,33 @@
 using System.Collections.Generic;
+using UI;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace Pick.Mode
 {
-    [RequireComponent(typeof(Camera))]
     public class PixelCurve : MonoBehaviour
     {
-        [SerializeField] private Image colorSquare;
-        [SerializeField] private GameObject hitPointPrefab;
-
-        private readonly List<GameObject> _hitPoints = new();
-
         private Picker _picker;
+        private readonly List<GameObject> _hitPoints = new();
+        private PixelCurveUI _ui;
         
         private void Awake()
         {
-            _picker = Camera.main.GetComponent<Picker>();
+            _picker = GetComponentInParent<Picker>();
+            _ui = GetComponent<PixelCurveUI>();
         }
 
+        private void Start()
+        {
+            _picker.OnPickModeChanged += ClearHitPoints;
+        }
+
+        private void ClearHitPoints(object sender, Picker.OnPickModeChangedEventArgs args)
+        {
+            ClearHitPoints();
+        }
+        
         void Update()
         {
-            if (_picker.Changed())
-            {
-                ClearHitPoints();
-            }
-            
             //todo move pixel and curve logic to separate classes
             bool pointClicked = Input.GetMouseButtonDown(0) && _picker.Value == PickMode.Pixel;
             bool curveHeld = Input.GetMouseButton(0) && _picker.Value == PickMode.Curve;
@@ -51,7 +53,7 @@ namespace Pick.Mode
             pixelUV.y *= tex.height;
             Color color = tex.GetPixel((int)pixelUV.x, (int)pixelUV.y);
             // Color square
-            colorSquare.color = color;
+            _ui.ColorSquare.color = color;
 
             if (Input.GetMouseButtonDown(0))
             {
@@ -59,7 +61,7 @@ namespace Pick.Mode
             }
 
             // Add new hit point
-            var hitPoint = Instantiate(hitPointPrefab, hit.point, Quaternion.identity);
+            var hitPoint = Instantiate(_ui.HitPointPrefab, hit.point, Quaternion.identity);
             _hitPoints.Add(hitPoint);
         }
 
