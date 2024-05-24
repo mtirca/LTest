@@ -1,6 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using Pick.Mode;
+using Model;
 using UnityEngine;
 
 namespace Other
@@ -9,12 +9,9 @@ namespace Other
     {
         public static Artefact Instance;
 
-        private Renderer _renderer;
         private MeshCollider _meshCollider;
         private Mesh _mesh;
-        private Texture2D _originalTexture;
 
-        //todo event on collection works?
         public ObservableCollection<Label> Labels { get; private set; }
 
         private void ListChanged(object sender, NotifyCollectionChangedEventArgs args)
@@ -38,8 +35,6 @@ namespace Other
                 Destroy(this);
             }
 
-            // DontDestroyOnLoad(this);
-
             #endregion
 
             #region Init
@@ -47,22 +42,8 @@ namespace Other
             _meshCollider = GetComponent<MeshCollider>();
             _mesh = _meshCollider.sharedMesh;
             ResetMeshColor();
-            _renderer = transform.GetComponent<Renderer>();
-            _originalTexture = _renderer.material.mainTexture as Texture2D;
 
             #endregion
-
-            #region TextureInit
-
-            RefreshTexture();
-
-            #endregion
-        }
-
-        //todo still need?
-        public void RefreshTexture()
-        {
-            _renderer.material.mainTexture = Instantiate(_originalTexture);
         }
 
         public void ResetMeshColor()
