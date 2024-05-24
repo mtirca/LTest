@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 using UnityEngine.UI;
 using Pick.Mode;
@@ -17,33 +16,14 @@ namespace Pick
         {
             _picker = GetComponent<Picker>();
             _picker.OnPickModeChanged += LoadPicker;
-            LoadCrosshair(_picker.Value);
+            crosshair.sprite = Utils.Resource.LoadCrosshair(_picker.Value);
             ActivatePicker(_picker.Value);
         }
 
         private void LoadPicker(object sender, Picker.OnPickModeChangedEventArgs args)
         {
-            LoadCrosshair(_picker.Value);
+            crosshair.sprite = Utils.Resource.LoadCrosshair(_picker.Value);
             ActivatePicker(_picker.Value);
-        }
-
-        //todo move to resources util class
-        private string GetCrosshairPath(PickMode pickMode)
-        {
-            return pickMode switch
-            {
-                PickMode.Pixel => "Crosshairs/crosshair002",
-                PickMode.Curve => "Crosshairs/crosshair001",
-                PickMode.Brush => "Crosshairs/crosshair117",
-                _ => throw new Exception("Bad picker value")
-            };
-        }
-
-        //todo move to resources util class
-        private void LoadCrosshair(PickMode pickMode)
-        {
-            var crosshairTex = Resources.Load<Sprite>(GetCrosshairPath(pickMode));
-            crosshair.sprite = crosshairTex;
         }
 
         private void ActivatePicker(PickMode pickMode)
