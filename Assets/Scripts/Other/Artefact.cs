@@ -21,9 +21,6 @@ namespace Other
 
         private void Awake()
         {
-            Labels = new ObservableCollection<Label>();
-            Labels.CollectionChanged += ListChanged;
-
             #region Singleton
 
             if (Instance == null)
@@ -37,13 +34,15 @@ namespace Other
 
             #endregion
 
-            #region Init
-
             _meshCollider = GetComponent<MeshCollider>();
             _mesh = _meshCollider.sharedMesh;
             ResetMeshColor();
-
-            #endregion
+            
+            Labels = new ObservableCollection<Label>();
+            
+            //todo load existing labels
+            
+            Labels.CollectionChanged += ListChanged;
         }
 
         public void ResetMeshColor()

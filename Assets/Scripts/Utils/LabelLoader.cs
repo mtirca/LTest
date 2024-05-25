@@ -1,7 +1,7 @@
-namespace Other
+namespace Utils
 {
     public class LabelLoader
     {
-        
+        // public static 
     }
 }
