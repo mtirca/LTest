@@ -1,0 +1,11 @@
+Model Information:
+* title:	Terracotta Kylix (Courtesy of The Met)
+* source:	https://sketchfab.com/3d-models/terracotta-kylix-courtesy-of-the-met-1cb2dfc2ab644ece865e811ba48511ed
+* author:	Angel Cormier (https://sketchfab.com/angelcormier)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Terracotta Kylix (Courtesy of The Met)" (https://sketchfab.com/3d-models/terracotta-kylix-courtesy-of-the-met-1cb2dfc2ab644ece865e811ba48511ed) by Angel Cormier (https://sketchfab.com/angelcormier) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
