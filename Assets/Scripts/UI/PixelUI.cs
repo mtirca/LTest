@@ -3,13 +3,9 @@ using UnityEngine.UI;
 
 namespace UI
 {
-    public class PixelCurveUI : MonoBehaviour
+    public class PixelUI : MonoBehaviour
     {
         [SerializeField] private Image colorSquare;
         public Image ColorSquare => colorSquare;
-
-
-        [SerializeField] private GameObject hitPointPrefab;
-        public GameObject HitPointPrefab => hitPointPrefab;
     }
 }

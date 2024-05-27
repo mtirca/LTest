@@ -7,14 +7,11 @@ namespace Player
     {
         #region UI
 
-        [Space] [SerializeField] [Tooltip("The script is currently active")]
-        private bool active = true;
-
-        [Space] [SerializeField] [Tooltip("Camera zooming in/out by 'Mouse Scroll Wheel' is active")]
+        [SerializeField] [Tooltip("Camera zooming in/out by 'Mouse Scroll Wheel' is active")]
         private bool enableTranslation = true;
 
         [SerializeField] [Tooltip("Velocity of camera zooming in/out")]
-        private float translationSpeed = 55f;
+        private float translationSpeed = 10f;
 
         [SerializeField] [Tooltip("Camera movement speed")]
         private float movementSpeed = .01f;
@@ -27,9 +24,6 @@ namespace Player
         
         #endregion UI
 
-        private Vector3 _initPosition;
-        private Vector3 _initRotation;
-
 #if UNITY_EDITOR
         private void OnValidate()
         {
@@ -38,37 +32,11 @@ namespace Player
         }
 #endif
 
-        private void Start()
-        {
-            _initPosition = transform.position;
-            _initRotation = transform.eulerAngles;
-            Cursor.lockState = CursorLockMode.Locked;
-        }
-
-        private void OnEnable()
-        {
-            if (active)
-                Cursor.lockState = CursorLockMode.Locked;
-        }
-
         private void Update()
         {
-            if (!active)
-                return;
-
-            if (Cursor.visible)
-                return;
-
             Zoom();
 
             Move();
-
-            // Return to init position
-            if (Input.GetKeyDown(KeyCode.R))
-            {
-                transform.position = _initPosition;
-                transform.eulerAngles = _initRotation;
-            }
         }
 
         private void Move()
@@ -99,10 +67,10 @@ namespace Player
 
             transform.position += deltaPosition * currentSpeed;
 
-            if(Input.GetKey(KeyCode.E))
+            if (Input.GetKey(KeyCode.E))
                 transform.Rotate(0.0f, 0.0f, -Time.deltaTime * rotationSens);
             
-            if(Input.GetKey(KeyCode.Q))
+            if (Input.GetKey(KeyCode.Q))
                 transform.Rotate(0.0f, 0.0f, +Time.deltaTime * rotationSens);
         }
 

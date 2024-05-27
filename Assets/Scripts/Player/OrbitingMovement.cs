@@ -1,4 +1,4 @@
-using Other;
+using ArtefactSystem;
 using UnityEngine;
 
 namespace Player
@@ -8,18 +8,17 @@ namespace Player
     {
         [SerializeField] [Tooltip("Sensitivity of mouse rotation")]
         private float speed = 1.8f;
-        
+
+        [SerializeField] private Artefact artefact;
+
         private void Update()
         {
-            var axis1 = transform.right;
-            var axis2 = transform.up;
-            
-            var pos = Artefact.Instance.GetComponent<Renderer>().bounds.center;
+            if (!Input.GetMouseButton(0)) return;
 
-            transform.RotateAround(pos, axis1,
-                -Input.GetAxis("Mouse Y") * speed);
-            transform.RotateAround(pos, axis2,
-                Input.GetAxis("Mouse X") * speed);
+            var pos = artefact.GetComponent<Renderer>().bounds.center;
+
+            transform.RotateAround(pos, transform.right, -Input.GetAxis("Mouse Y") * speed);
+            transform.RotateAround(pos, transform.up, Input.GetAxis("Mouse X") * speed);
         }
     }
 }

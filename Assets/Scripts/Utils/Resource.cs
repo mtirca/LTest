@@ -11,7 +11,6 @@ namespace Utils
             return pickMode switch
             {
                 PickMode.Pixel => "Crosshairs/crosshair002",
-                PickMode.Curve => "Crosshairs/crosshair001",
                 PickMode.Brush => "Crosshairs/crosshair117",
                 _ => throw new Exception("Bad picker value")
             };
@@ -20,6 +19,11 @@ namespace Utils
         public static Sprite LoadCrosshair(PickMode pickMode)
         {
             return Resources.Load<Sprite>(GetCrosshairPath(pickMode));
+        }
+        
+        public static Texture2D LoadCrosshairTexture(PickMode pickMode)
+        {
+            return Resources.Load<Texture2D>(GetCrosshairPath(pickMode));
         }
     }
 }
