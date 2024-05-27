@@ -1,9 +1,8 @@
 using System.Collections.Specialized;
 using System.Linq;
-using Other;
-using Model;
-using TMPro;
 using UnityEngine;
+using ArtefactSystem;
+using TMPro;
 using UnityEngine.UI;
 
 namespace UI
@@ -12,10 +11,11 @@ namespace UI
     {
         [SerializeField] private GameObject labelPrefab;
         [SerializeField] private Transform contentHolder;
-        
+        [SerializeField] private Artefact artefact;
+
         private void Start()
         {
-            Artefact.Instance.Labels.CollectionChanged += UpdateUILabels;
+            artefact.Labels.CollectionChanged += UpdateUILabels;
         }
 
         //todo update if remove labels

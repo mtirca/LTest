@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace Player
 {
@@ -8,12 +7,15 @@ namespace Player
     {
         #region UI
 
-        [FormerlySerializedAs("_mouseSens")] [Space] [SerializeField] [Tooltip("Sensitivity of mouse rotation")]
-        private float mouseSens = 1.8f;
+        [SerializeField] [Tooltip("Yaw mouse sensitivity")]
+        private float mouseXSens = 1.8f;
+
+        [SerializeField] [Tooltip("Pitch mouse sensitivity")]
+        private float mouseYSens = 1.8f;
 
         #endregion
 
-        void Update()
+        private void Update()
         {
             RotateCamera();
         }
@@ -21,17 +23,26 @@ namespace Player
         private void RotateCamera()
         {
             // Pitch
-            transform.rotation *= Quaternion.AngleAxis(
-                -Input.GetAxis("Mouse Y") * mouseSens,
-                Vector3.right
-            );
+            // transform.rotation *= Quaternion.AngleAxis(
+            //     -Time.deltaTime * Input.GetAxis("Mouse Y") * mouseYSens,
+            //     Vector3.right
+            // );
 
             // Yaw
-            transform.rotation = Quaternion.Euler(
-                transform.eulerAngles.x,
-                transform.eulerAngles.y + Input.GetAxis("Mouse X") * mouseSens,
-                transform.eulerAngles.z
-            );
+            // transform.rotation = Quaternion.Euler(
+            //     transform.eulerAngles.x - Time.deltaTime * mouseYSens * Input.GetAxis("Mouse Y"),
+            //     transform.eulerAngles.y + Time.deltaTime * mouseXSens * Input.GetAxis("Mouse X"),
+            //     transform.eulerAngles.z
+            // );
+            // transform.rotation = originalRotation * Quaternion.Euler(pitch, yaw, 0.0f);
+
+            // yaw += Time.deltaTime * mouseXSens * Input.GetAxis("Mouse X");
+            // pitch -= Time.deltaTime * mouseYSens * Input.GetAxis("Mouse Y");
+
+            var z = transform.rotation.z;
+            transform.Rotate(-Input.GetAxis("Mouse Y") * mouseYSens, 0.0f, 0.0f);
+            
+            transform.Rotate(0.0f, Input.GetAxis("Mouse X") * mouseXSens, 0.0f);
         }
     }
 }

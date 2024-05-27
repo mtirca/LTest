@@ -1,14 +1,11 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using Model;
 using UnityEngine;
 
-namespace Other
+namespace ArtefactSystem
 {
     public class Artefact : MonoBehaviour
     {
-        public static Artefact Instance;
-
         private MeshCollider _meshCollider;
         private Mesh _mesh;
 
@@ -21,19 +18,6 @@ namespace Other
 
         private void Awake()
         {
-            #region Singleton
-
-            if (Instance == null)
-            {
-                Instance = this;
-            }
-            else if (Instance != this)
-            {
-                Destroy(this);
-            }
-
-            #endregion
-
             _meshCollider = GetComponent<MeshCollider>();
             _mesh = _meshCollider.sharedMesh;
             ResetMeshColor();

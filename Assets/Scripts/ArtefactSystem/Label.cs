@@ -1,9 +1,8 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-namespace Model
+namespace ArtefactSystem
 {
     public class Label
     {
@@ -11,15 +10,15 @@ namespace Model
         public string Text;
         public Color Color;
         public List<Vector3> Vertices;
-        public static List<int> ExistingIds;
+        public static List<int> ExistingIds = new();
 
         public Label()
         {
             int newId;
             do
             {
-                newId = Random.Range(Int32.MinValue, Int32.MaxValue);
-            } while (!ExistingIds.Contains(newId));
+                newId = Random.Range(int.MinValue, int.MaxValue);
+            } while (ExistingIds.Contains(newId));
 
             Id = newId;
             Color = RandomColor();
