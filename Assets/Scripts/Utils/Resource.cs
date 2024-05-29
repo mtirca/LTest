@@ -16,7 +16,7 @@ namespace Utils
             };
         }
         
-        public static Sprite LoadCrosshair(PickMode pickMode)
+        public static Sprite LoadCrosshairSprite(PickMode pickMode)
         {
             return Resources.Load<Sprite>(GetCrosshairPath(pickMode));
         }
