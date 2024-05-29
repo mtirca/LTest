@@ -19,7 +19,7 @@ namespace Pick.Mode
 
         private void Awake()
         {
-            _activeLabel = new Label();
+            _activeLabel = Label.DefaultLabel();
         }
 
         private void Start()
@@ -31,18 +31,19 @@ namespace Pick.Mode
         {
             if (args.OldValue != PickMode.Brush) return;
             artefact.ResetMeshColor();
-            _activeLabel = new Label();
+            _activeLabel = Label.DefaultLabel();
         }
 
         private void Update()
         {
             _cursorPos = Input.mousePosition;
+            
             if (Input.GetKeyDown(KeyCode.Return))
             {
                 //todo should i return or just get out of if()?
-                if (_activeLabel.Vertices.Count == 0) return;
-                artefact.Labels.Add(_activeLabel);
-                _activeLabel = new Label();
+                if (_activeLabel.vertices.Count == 0) return;
+                artefact.AddLabel(_activeLabel);
+                _activeLabel = Label.DefaultLabel();
                 return;
             }
 
@@ -57,11 +58,11 @@ namespace Pick.Mode
             var cameraPosition = mainCamera.transform.position;
             var triangles = aMesh.triangles;
 
-            //todo iterate only through unpainted vertices, not through all while asking if theyre unpainted
+            //todo iterate only through unpainted vertices, not through all while asking if they're unpainted
             for (var i = 0; i < vertices.Length; i++)
             {
                 // check it hasn't been painted already
-                if (colors[i] == _activeLabel.Color) continue;
+                if (colors[i] == _activeLabel.color) continue;
 
                 Vector3 worldVertex = aTransform.TransformPoint(vertices[i]);
 
@@ -103,9 +104,9 @@ namespace Pick.Mode
 
                 #endregion
 
-                colors[i] = _activeLabel.Color;
+                colors[i] = _activeLabel.color;
 
-                _activeLabel.Vertices.Add(vertices[i]);
+                _activeLabel.vertices.Add(vertices[i]);
             }
 
             aMesh.colors = colors;

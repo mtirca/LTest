@@ -1,5 +1,4 @@
-using System.Collections.Specialized;
-using System.Linq;
+using System;
 using UnityEngine;
 using ArtefactSystem;
 using TMPro;
@@ -15,20 +14,28 @@ namespace UI
 
         private void Start()
         {
-            artefact.Labels.CollectionChanged += UpdateUILabels;
+            artefact.LabelsChanged += UpdateUILabels;
         }
 
-        //todo update if remove labels
-        private void UpdateUILabels(object sender, NotifyCollectionChangedEventArgs args)
+        private void UpdateUILabels(object sender, Artefact.LabelsChangedEventArgs args)
         {
-            var newLabels = args.NewItems.Cast<Label>();
-            foreach (var newLabel in newLabels)
+            switch (args.Type)
             {
-                var uiLabel = Instantiate(labelPrefab, contentHolder);
-                var text = uiLabel.GetComponentInChildren<TMP_Text>();
-                var image = uiLabel.GetComponentInChildren<Image>();
-                text.text = newLabel.Text;
-                image.color = newLabel.Color;
+                case LabelEvent.Add:
+                {
+                    var newLabel = args.Item;
+                    var uiLabel = Instantiate(labelPrefab, contentHolder);
+                    var text = uiLabel.GetComponentInChildren<TMP_Text>();
+                    var image = uiLabel.GetComponentInChildren<Image>();
+                    text.text = newLabel.text;
+                    image.color = newLabel.color;
+                    break;
+                }
+                case LabelEvent.Remove:
+                    //todo update if remove label
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
         }
     }

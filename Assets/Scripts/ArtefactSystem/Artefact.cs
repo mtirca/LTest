@@ -1,6 +1,7 @@
-using System.Collections.ObjectModel;
-using System.Collections.Specialized;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
+using Utils;
 
 namespace ArtefactSystem
 {
@@ -9,26 +10,24 @@ namespace ArtefactSystem
         private MeshCollider _meshCollider;
         private Mesh _mesh;
 
-        public ObservableCollection<Label> Labels { get; private set; }
+        public List<Label> Labels { get; set; }
 
-        private void ListChanged(object sender, NotifyCollectionChangedEventArgs args)
+        public event EventHandler<LabelsChangedEventArgs> LabelsChanged;
+
+        public class LabelsChangedEventArgs
         {
-            ResetMeshColor();
+            public LabelEvent Type;
+            public Label Item;
         }
 
         private void Awake()
         {
+            Labels = new List<Label>(LabelLoader.Load());
             _meshCollider = GetComponent<MeshCollider>();
             _mesh = _meshCollider.sharedMesh;
-            ResetMeshColor();
-            
-            Labels = new ObservableCollection<Label>();
-            
-            //todo load existing labels
-            
-            Labels.CollectionChanged += ListChanged;
         }
 
+        //todo update
         public void ResetMeshColor()
         {
             var colors = new Color[_mesh.vertices.Length];
@@ -38,6 +37,14 @@ namespace ArtefactSystem
             }
 
             _mesh.colors = colors;
+        }
+
+        public void AddLabel(Label newLabel)
+        {
+            LabelsChanged?.Invoke(this, new LabelsChangedEventArgs { Type = LabelEvent.Add, Item = newLabel });
+            Labels.Add(newLabel);
+            LabelLoader.Save(Labels);
+            ResetMeshColor();
         }
     }
 }

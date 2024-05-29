@@ -1,34 +1,45 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
-using Random = UnityEngine.Random;
+using Utils;
 
 namespace ArtefactSystem
 {
+    [Serializable]
     public class Label
     {
-        public int Id;
-        public string Text;
-        public Color Color;
-        public List<Vector3> Vertices;
-        public static List<int> ExistingIds = new();
-
-        public Label()
+        public Color color;
+        public string text;
+        public List<Vector3> vertices;
+        
+        public Label(Color color, string text, List<Vector3> vertices)
         {
-            int newId;
-            do
-            {
-                newId = Random.Range(int.MinValue, int.MaxValue);
-            } while (ExistingIds.Contains(newId));
-
-            Id = newId;
-            Color = RandomColor();
-            Text = Color.ToString();
-            Vertices = new List<Vector3>();
+            this.color = color;
+            this.text = text;
+            this.vertices = vertices;
         }
 
-        private static Color RandomColor()
+        public bool IsVisible()
         {
-            return Random.ColorHSV(0, 1, 0, 1, 0, 1, 0.5f, 0.5f);
+            return color.a != 0;
+        }
+
+        public void MakeVisible()
+        {
+            color.a = 0.5f;
+        }
+
+        public void MakeInvisible()
+        {
+            color.a = 0.0f;
+        }
+        
+        public static Label DefaultLabel()
+        {
+            var color = ColorUtil.RandomColor();
+            var text = color.ToString();
+            var vertices = new List<Vector3>();
+            return new Label(color, text, vertices);
         }
     }
 }
