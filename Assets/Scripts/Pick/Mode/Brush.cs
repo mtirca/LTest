@@ -1,6 +1,10 @@
+using System;
+using System.Collections.Generic;
 using ArtefactSystem;
+using LabelSystem;
 using UnityEngine;
 using UI;
+using Utils;
 
 namespace Pick.Mode
 {
@@ -9,17 +13,18 @@ namespace Pick.Mode
         [SerializeField] private Picker picker;
         [SerializeField] private Camera mainCamera;
         [SerializeField] private BrushUI ui;
+
         [SerializeField] private Artefact artefact;
+
+        // in screen space
+        [SerializeField] private double brushRadius = 15;
 
         private Vector3 _cursorPos;
         private Label _activeLabel;
 
-        // in screen space
-        public double brushRadius = 15;
-
         private void Awake()
         {
-            _activeLabel = Label.DefaultLabel();
+            _activeLabel = NewActiveLabel();
         }
 
         private void Start()
@@ -30,39 +35,41 @@ namespace Pick.Mode
         private void ResetBrush(object sender, Picker.OnPickModeChangedEventArgs args)
         {
             if (args.OldValue != PickMode.Brush) return;
-            artefact.ResetMeshColor();
-            _activeLabel = Label.DefaultLabel();
+            //todo reset changes made to shader
+            _activeLabel = NewActiveLabel();
+        }
+
+        private Label NewActiveLabel()
+        {
+            int index = artefact.GetFirstAvailableLabelIndex();
+            if (index == -1)
+                throw new IndexOutOfRangeException($"Reached maximum label number per artefact ({Label.Max})");
+            var color = ColorUtil.RandomColor();
+            return new Label(index, color, color.ToString(), new List<LabelVertex>());
         }
 
         private void Update()
         {
             _cursorPos = Input.mousePosition;
-            
-            if (Input.GetKeyDown(KeyCode.Return))
+
+            if (Input.GetKeyDown(KeyCode.Return) && _activeLabel.vertices.Count != 0)
             {
-                //todo should i return or just get out of if()?
-                if (_activeLabel.vertices.Count == 0) return;
                 artefact.AddLabel(_activeLabel);
-                _activeLabel = Label.DefaultLabel();
+                _activeLabel = NewActiveLabel();
                 return;
             }
 
             if (!Input.GetMouseButton(0)) return;
 
-            //todo add as readonly field to artefact instance
             var aTransform = artefact.transform;
-            var aMeshCollider = artefact.GetComponent<MeshCollider>();
-            var aMesh = aMeshCollider.sharedMesh;
-            var vertices = aMesh.vertices;
-            var colors = aMesh.colors;
+            var vertices = artefact.Mesh.vertices;
             var cameraPosition = mainCamera.transform.position;
-            var triangles = aMesh.triangles;
+            var triangles = artefact.Mesh.triangles;
 
-            //todo iterate only through unpainted vertices, not through all while asking if they're unpainted
             for (var i = 0; i < vertices.Length; i++)
             {
                 // check it hasn't been painted already
-                if (colors[i] == _activeLabel.color) continue;
+                if (_activeLabel.IsVertexPresent(i)) continue;
 
                 Vector3 worldVertex = aTransform.TransformPoint(vertices[i]);
 
@@ -78,7 +85,7 @@ namespace Pick.Mode
                 #region Eliminate if pointing away
 
                 Vector3 directionToCamera = (cameraPosition - worldVertex).normalized;
-                Vector3 normal = aTransform.TransformDirection(aMesh.normals[i]);
+                Vector3 normal = aTransform.TransformDirection(artefact.Mesh.normals[i]);
 
                 // Calculate the angle between the vertex's normal vector and the direction to the camera
                 float angle = Vector3.Angle(normal, directionToCamera);
@@ -104,12 +111,12 @@ namespace Pick.Mode
 
                 #endregion
 
-                colors[i] = _activeLabel.color;
-
-                _activeLabel.vertices.Add(vertices[i]);
+                _activeLabel.vertices.Add(new LabelVertex(i, vertices[i]));
             }
 
-            aMesh.colors = colors;
+            //todo this is also called in artefact.addlabel; dont call it twice
+            // artefact.ShaderUpdater.AddLabelsToShader(new List<Label> { _activeLabel });
+            artefact.ShaderUpdater.AddLabelsToShaderX(new List<Label> { _activeLabel });
         }
     }
 }

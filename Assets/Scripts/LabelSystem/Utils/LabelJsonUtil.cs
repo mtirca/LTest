@@ -1,12 +1,11 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using ArtefactSystem;
 using UnityEngine;
 
-namespace Utils
+namespace LabelSystem.Utils
 {
-    public static class LabelLoader
+    public static class LabelJsonUtil
     {
         private const string JsonFileName = "labels.json";
 
@@ -25,7 +24,7 @@ namespace Utils
             {
                 var jsonData = File.ReadAllText(JsonPath);
                 var serializableData = JsonUtility.FromJson<Labels>(jsonData);
-                serializableData.labels.ForEach(label => label.MakeInvisible());
+                serializableData.labels.ForEach(label => label.color.a = 0);
                 return serializableData.labels.AsEnumerable();
             }
             catch (FileNotFoundException)
