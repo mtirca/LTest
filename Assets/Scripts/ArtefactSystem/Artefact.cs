@@ -1,50 +1,111 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using LabelSystem;
+using LabelSystem.Utils;
 using UnityEngine;
-using Utils;
 
 namespace ArtefactSystem
 {
     public class Artefact : MonoBehaviour
     {
-        private MeshCollider _meshCollider;
-        private Mesh _mesh;
+        public Renderer Renderer { get; private set; }
+        private MeshFilter MeshFilter { get; set; }
+        public Mesh Mesh => MeshFilter.sharedMesh;
+        public MeshCollider MeshCollider { get; set; }
 
-        public List<Label> Labels { get; set; }
+        public List<Label> Labels { get; private set; }
+
+        public ShaderLabelUpdater ShaderUpdater { get; private set; }
 
         public event EventHandler<LabelsChangedEventArgs> LabelsChanged;
 
         public class LabelsChangedEventArgs
         {
             public LabelEvent Type;
-            public Label Item;
+            public List<Label> Items;
         }
 
         private void Awake()
         {
-            Labels = new List<Label>(LabelLoader.Load());
-            _meshCollider = GetComponent<MeshCollider>();
-            _mesh = _meshCollider.sharedMesh;
+            Renderer = GetComponent<Renderer>();
+            MeshFilter = GetComponent<MeshFilter>();
+            MeshCollider = GetComponent<MeshCollider>();
+            ShaderUpdater = GetComponent<ShaderLabelUpdater>();
+            InitVertexColors();
+            InitLabels();
         }
 
-        //todo update
-        public void ResetMeshColor()
+        private void Update()
         {
-            var colors = new Color[_mesh.vertices.Length];
-            for (var i = 0; i < colors.Length; i++)
+            return;
+        }
+
+        public int GetFirstAvailableLabelIndex()
+        {
+            for (int i = 0; i < Label.Max; i++)
             {
-                colors[i] = Color.white;
+                if (Labels.Find(label => label.index == i) == null)
+                {
+                    return i;
+                }
             }
 
-            _mesh.colors = colors;
+            return -1;
         }
 
-        public void AddLabel(Label newLabel)
+        private void InitVertexColors()
         {
-            LabelsChanged?.Invoke(this, new LabelsChangedEventArgs { Type = LabelEvent.Add, Item = newLabel });
-            Labels.Add(newLabel);
-            LabelLoader.Save(Labels);
-            ResetMeshColor();
+            var colors = new Color[Mesh.vertices.Length];
+            for (var i = 0; i < colors.Length; i++)
+            {
+                colors[i] = new Color(0, 0, 0, 0);
+            }
+
+            Mesh.colors = colors;
+        }
+
+        private void InitLabels()
+        {
+            var labels = LabelJsonUtil.Load().ToList();
+            LabelsChanged?.Invoke(this, new LabelsChangedEventArgs { Type = LabelEvent.Add, Items = labels });
+            Labels = new List<Label>(labels);
+        }
+
+        /**
+         * Adds a Label:
+         * 1. Updates artefact's in memory labels
+         * 2. Updates shader texture
+         * 3. Updates on disk
+         */
+        public void AddLabel(Label label)
+        {
+            LabelsChanged?.Invoke(this,
+                new LabelsChangedEventArgs { Type = LabelEvent.Add, Items = new List<Label> { label } });
+
+            // Add label to list
+            Labels.Add(label);
+
+            // Update shader
+            ShaderUpdater.AddLabelsToShader(new List<Label> { label });
+
+            // Add label to disk
+            LabelJsonUtil.Save(Labels);
+        }
+
+        public void RemoveLabel(Label label)
+        {
+            LabelsChanged?.Invoke(this,
+                new LabelsChangedEventArgs { Type = LabelEvent.Remove, Items = new List<Label> { label } });
+
+            // Remove label from list
+            Labels.Remove(label);
+
+            // Update shader
+            ShaderUpdater.RemoveLabelsFromShader(new List<Label> { label });
+
+            // Remove label from disk
+            LabelJsonUtil.Save(Labels);
         }
     }
 }

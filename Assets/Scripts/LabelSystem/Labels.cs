@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace ArtefactSystem
+namespace LabelSystem
 {
     [Serializable]
     public class Labels

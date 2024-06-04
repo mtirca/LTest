@@ -6,7 +6,7 @@ namespace Utils
     {
         public static Color RandomColor()
         {
-            return Random.ColorHSV(0, 1, 0, 1, 0, 1, 0.5f, 0.5f);
+            return Random.ColorHSV(0, 1, 0, 1, 0, 1, 1, 1);
         }
     }
 }

@@ -23,12 +23,14 @@ namespace UI
             {
                 case LabelEvent.Add:
                 {
-                    var newLabel = args.Item;
-                    var uiLabel = Instantiate(labelPrefab, contentHolder);
-                    var text = uiLabel.GetComponentInChildren<TMP_Text>();
-                    var image = uiLabel.GetComponentInChildren<Image>();
-                    text.text = newLabel.text;
-                    image.color = newLabel.color;
+                    args.Items.ForEach(newLabel =>
+                    {
+                        var uiLabel = Instantiate(labelPrefab, contentHolder);
+                        var text = uiLabel.GetComponentInChildren<TMP_Text>();
+                        var image = uiLabel.GetComponentInChildren<Image>();
+                        text.text = newLabel.text;
+                        image.color = newLabel.color;
+                    });
                     break;
                 }
                 case LabelEvent.Remove:
