@@ -36,6 +36,20 @@ namespace ArtefactSystem
             InitLabels();
         }
 
+        public void HideLabel(int labelIndex)
+        {
+            var label = Labels.Find(l => l.index == labelIndex);
+            label.color.a = 0;
+            ShaderUpdater.UpdateShaderLabels(new List<Label> { label });
+        }
+
+        public void ShowLabel(int labelIndex)
+        {
+            var label = Labels.Find(l => l.index == labelIndex);
+            label.color.a = 1;
+            ShaderUpdater.UpdateShaderLabels(new List<Label> { label });
+        }
+
         private void Update()
         {
             return;
@@ -75,8 +89,7 @@ namespace ArtefactSystem
         /**
          * Adds a Label:
          * 1. Updates artefact's in memory labels
-         * 2. Updates shader texture
-         * 3. Updates on disk
+         * 2. Updates on disk
          */
         public void AddLabel(Label label)
         {
@@ -85,9 +98,6 @@ namespace ArtefactSystem
 
             // Add label to list
             Labels.Add(label);
-
-            // Update shader
-            ShaderUpdater.AddLabelsToShader(new List<Label> { label });
 
             // Add label to disk
             LabelJsonUtil.Save(Labels);
@@ -100,9 +110,6 @@ namespace ArtefactSystem
 
             // Remove label from list
             Labels.Remove(label);
-
-            // Update shader
-            ShaderUpdater.RemoveLabelsFromShader(new List<Label> { label });
 
             // Remove label from disk
             LabelJsonUtil.Save(Labels);
