@@ -34,9 +34,18 @@ namespace Pick.Mode
 
         private void ResetBrush(object sender, Picker.OnPickModeChangedEventArgs args)
         {
-            if (args.OldValue != PickMode.Brush) return;
-            //todo reset changes made to shader
-            _activeLabel = NewActiveLabel();
+            // Changed PickMode from brush
+            if (args.OldValue == PickMode.Brush && args.NewValue != PickMode.Brush)
+            {
+                artefact.ShaderUpdater.RemoveShaderLabels(new List<Label> { _activeLabel });
+                _activeLabel = null;
+            }
+
+            // Changed PickMode to brush
+            if (args.OldValue != PickMode.Brush && args.NewValue == PickMode.Brush)
+            {
+                _activeLabel = NewActiveLabel();
+            }
         }
 
         private Label NewActiveLabel()
@@ -55,6 +64,7 @@ namespace Pick.Mode
             if (Input.GetKeyDown(KeyCode.Return) && _activeLabel.vertices.Count != 0)
             {
                 artefact.AddLabel(_activeLabel);
+                artefact.HideLabel(_activeLabel.index);
                 _activeLabel = NewActiveLabel();
                 return;
             }
@@ -114,9 +124,7 @@ namespace Pick.Mode
                 _activeLabel.vertices.Add(new LabelVertex(i, vertices[i]));
             }
 
-            //todo this is also called in artefact.addlabel; dont call it twice
-            // artefact.ShaderUpdater.AddLabelsToShader(new List<Label> { _activeLabel });
-            artefact.ShaderUpdater.AddLabelsToShaderX(new List<Label> { _activeLabel });
+            artefact.ShaderUpdater.UpdateShaderLabels(new List<Label> { _activeLabel });
         }
     }
 }
