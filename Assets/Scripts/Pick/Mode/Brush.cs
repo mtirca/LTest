@@ -54,7 +54,7 @@ namespace Pick.Mode
             if (index == -1)
                 throw new IndexOutOfRangeException($"Reached maximum label number per artefact ({Label.Max})");
             var color = ColorUtil.RandomColor();
-            return new Label(index, color, color.ToString(), new List<LabelVertex>());
+            return new Label(index, color.ToString(), color.ToString(), color, new List<LabelVertex>());
         }
 
         private void Update()

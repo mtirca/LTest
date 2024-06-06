@@ -1674,7 +1674,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b1c0723ebb5d4cbf9e74c8f0ba4dfb20, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  labelPrefab: {fileID: 1279852511991807180, guid: 969b22a2dfc600a48bccb2ea16cdf234, type: 3}
+  labelPrefab: {fileID: 8943458089348221935, guid: cca1cd15cdd45f545b7e125022dcb1ea, type: 3}
   contentHolder: {fileID: 1411382862}
   artefact: {fileID: 616170884}
 --- !u!1 &2021835438
