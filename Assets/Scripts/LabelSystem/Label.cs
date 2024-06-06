@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using Utils;
 
 namespace LabelSystem
 {
@@ -11,15 +10,17 @@ namespace LabelSystem
         public const int Max = 32;
 
         public int index;
+        public string name;
+        public string description;
         public Color color;
-        public string text;
         public List<LabelVertex> vertices;
         
-        public Label(int index, Color color, string text, List<LabelVertex> vertices)
+        public Label(int index, string name, string description, Color color, List<LabelVertex> vertices)
         {
             this.index = index;
+            this.name = name;
+            this.description = description;
             this.color = color;
-            this.text = text;
             this.vertices = vertices;
         }
 
