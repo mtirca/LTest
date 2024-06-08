@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Utils;
 
 namespace LabelSystem
 {
@@ -14,7 +15,7 @@ namespace LabelSystem
         public string description;
         public Color color;
         public List<LabelVertex> vertices;
-        
+
         public Label(int index, string name, string description, Color color, List<LabelVertex> vertices)
         {
             this.index = index;
@@ -24,6 +25,8 @@ namespace LabelSystem
             this.vertices = vertices;
         }
 
+        public Label(int index) : this(index, "", "", ColorUtil.RandomColor(), new List<LabelVertex>()) {}
+
         public bool IsVisible()
         {
             return color.a >= 0.5f;
@@ -32,7 +35,6 @@ namespace LabelSystem
         public void Show()
         {
             color.a = 1;
-            //todo also change tex
         }
 
         public void Hide()

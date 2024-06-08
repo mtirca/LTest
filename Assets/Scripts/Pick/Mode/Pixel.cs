@@ -1,5 +1,6 @@
 using UI;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace Pick.Mode
 {
@@ -9,23 +10,18 @@ namespace Pick.Mode
         [SerializeField] private Camera mainCamera;
         [SerializeField] private PixelUI ui;
         [SerializeField] private GameObject hitPointPrefab;
-        
+
         private GameObject _hitPoint;
         private Vector3 _cursorPos;
 
-        private void Start()
-        {
-            picker.OnPickModeChanged += ClearHitPoint;
-        }
-
-        private void ClearHitPoint(object sender, Picker.OnPickModeChangedEventArgs args)
+        private void OnDisable()
         {
             Destroy(_hitPoint);
         }
 
-        void Update()
+        private void Update()
         {
-            if (!Input.GetMouseButtonDown(0)) return;
+            if (!Input.GetMouseButtonDown(0) || EventSystem.current.IsPointerOverGameObject()) return;
 
             _cursorPos = Input.mousePosition;
 
