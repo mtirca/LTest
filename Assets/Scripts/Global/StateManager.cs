@@ -25,7 +25,7 @@ namespace Global
                 _state = value;
                 if (oldState == value) return;
 
-                ManagePicker(value);
+                // ManagePicker(value);
                 OnGlobalStateChanged?.Invoke(this,
                     new OnGlobalStateChangedEventArgs { OldValue = oldState, NewValue = value });
             }

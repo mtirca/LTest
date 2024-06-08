@@ -1,10 +1,8 @@
-using System;
-using System.Collections.Generic;
 using ArtefactSystem;
 using LabelSystem;
 using UnityEngine;
 using UI;
-using Utils;
+using UnityEngine.EventSystems;
 
 namespace Pick.Mode
 {
@@ -20,56 +18,66 @@ namespace Pick.Mode
         [SerializeField] private double brushRadius = 15;
 
         private Vector3 _cursorPos;
+
         private Label _activeLabel;
+
+        private Label ActiveLabel
+        {
+            get => _activeLabel;
+            set
+            {
+                _activeLabel = value;
+                if (value != null) ui.UpdateActiveLabel(value);
+            }
+        }
+
+        private bool _quitting;
 
         private void Awake()
         {
-            _activeLabel = NewActiveLabel();
+            _activeLabel = null;
         }
 
-        private void Start()
+        private void OnDisable()
         {
-            picker.OnPickModeChanged += ResetBrush;
-        }
-
-        private void ResetBrush(object sender, Picker.OnPickModeChangedEventArgs args)
-        {
-            // Changed PickMode from brush
-            if (args.OldValue == PickMode.Brush && args.NewValue != PickMode.Brush)
+            if (_quitting) return;
+            if (_activeLabel != null)
             {
-                artefact.ShaderUpdater.RemoveShaderLabels(new List<Label> { _activeLabel });
-                _activeLabel = null;
-            }
-
-            // Changed PickMode to brush
-            if (args.OldValue != PickMode.Brush && args.NewValue == PickMode.Brush)
-            {
-                _activeLabel = NewActiveLabel();
+                artefact.ShaderUpdater.RemoveShaderLabel(_activeLabel);
             }
         }
 
-        private Label NewActiveLabel()
+        private void OnApplicationQuit()
         {
-            int index = artefact.GetFirstAvailableLabelIndex();
-            if (index == -1)
-                throw new IndexOutOfRangeException($"Reached maximum label number per artefact ({Label.Max})");
-            var color = ColorUtil.RandomColor();
-            return new Label(index, color.ToString(), color.ToString(), color, new List<LabelVertex>());
+            _quitting = true;
+        }
+
+        public void NewLabel()
+        {
+            //todo handle over 32
+            var newLabel = artefact.NewLabel();
+            Debug.Log($"Old value: {_activeLabel}; New value: {newLabel}");
+            ActiveLabel = newLabel;
+        }
+
+        public void ActivateLabel(int labelIndex)
+        {
+            var label = artefact.FindLabel(labelIndex);
+            Debug.Log($"Old value: {_activeLabel}; New value: {label}");
+            ActiveLabel = label;
+        }
+
+        public void UpdateLabel(int labelIndex, string newName, string newDescription, Color newColor)
+        {
+            artefact.UpdateLabel(labelIndex, newName, newDescription, newColor);
         }
 
         private void Update()
         {
             _cursorPos = Input.mousePosition;
 
-            if (Input.GetKeyDown(KeyCode.Return) && _activeLabel.vertices.Count != 0)
-            {
-                artefact.AddLabel(_activeLabel);
-                artefact.HideLabel(_activeLabel.index);
-                _activeLabel = NewActiveLabel();
-                return;
-            }
-
-            if (!Input.GetMouseButton(0)) return;
+            if (ActiveLabel == null || !Input.GetMouseButton(0)) return;
+                // EventSystem.current.IsPointerOverGameObject()) return;
 
             var aTransform = artefact.transform;
             var vertices = artefact.Mesh.vertices;
@@ -79,7 +87,7 @@ namespace Pick.Mode
             for (var i = 0; i < vertices.Length; i++)
             {
                 // check it hasn't been painted already
-                if (_activeLabel.IsVertexPresent(i)) continue;
+                if (ActiveLabel.IsVertexPresent(i)) continue;
 
                 Vector3 worldVertex = aTransform.TransformPoint(vertices[i]);
 
@@ -121,10 +129,10 @@ namespace Pick.Mode
 
                 #endregion
 
-                _activeLabel.vertices.Add(new LabelVertex(i, vertices[i]));
+                ActiveLabel.vertices.Add(new LabelVertex(i, vertices[i]));
             }
 
-            artefact.ShaderUpdater.UpdateShaderLabels(new List<Label> { _activeLabel });
+            artefact.ShaderUpdater.UpdateShaderLabel(ActiveLabel);
         }
     }
 }

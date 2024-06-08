@@ -41,13 +41,6 @@ namespace Pick.Mode
             public PickMode NewValue;
         }
 
-        private void Start()
-        {
-            ActivatePickModeScripts(_value);
-            OnPickModeChanged?.Invoke(this,
-                new OnPickModeChangedEventArgs { OldValue = _value, NewValue = _value });
-        }
-
         private void ActivatePickModeScripts(PickMode newValue)
         {
             switch (newValue)

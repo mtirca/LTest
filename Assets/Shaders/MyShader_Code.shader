@@ -53,7 +53,9 @@ Shader "Custom/MyShader_Code"
                 {
                     const int label_index = channel * 8 + bit;
                     const int mask = 1 << bit;
-                    const int color32 = round(vColor[channel] * 255);
+                    // const int color32 = round(vColor[channel] * 255);
+                    const float f = vColor[channel];
+                    const int color32 = f >= 1.0 ? 255 : f <= 0.0 ? 0 : (int)floor(f * 256.0);
                     const int result = mask & color32;
                     const bool is_label_set = result != 0;
 

@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using ArtefactSystem;
 using UnityEngine;
 
@@ -53,90 +52,78 @@ namespace LabelSystem
             ColorArray = colorArray;
 
             // add label indices to vertex color
-            AddLabelIndicesToVerticesColor(_artefact.Labels);
+            _artefact.Labels.ForEach(AddLabelIndicesToVerticesColor);
         }
 
-        public void RemoveShaderLabels(List<Label> labels)
+        public void RemoveShaderLabel(Label label)
         {
             // Remove labels from shader
             var colorArray = _colorArray;
-            foreach (var label in labels)
-            {
-                colorArray[label.index] = new Color(0, 0, 0, 0);
-            }
-
+            colorArray[label.index] = new Color(0, 0, 0, 0);
             ColorArray = colorArray;
 
-            RemoveLabelIndicesFromVerticesColor(labels);
+            RemoveLabelIndicesFromVerticesColor(label);
         }
 
-        public void UpdateShaderLabels(List<Label> labels)
+        public void UpdateShaderLabel(Label label)
         {
             // Add labels to shader
             var colorArray = _colorArray;
-            foreach (var label in labels)
-            {
-                colorArray[label.index] = label.color;
-            }
-
+            colorArray[label.index] = label.color;
             ColorArray = colorArray;
 
-            AddLabelIndicesToVerticesColor(labels);
+            AddLabelIndicesToVerticesColor(label);
         }
 
-        private void AddLabelIndicesToVerticesColor(List<Label> labels)
+        private void AddLabelIndicesToVerticesColor(Label label)
         {
             var oldColors = _artefact.Mesh.colors32;
             var newColors = _artefact.Mesh.colors32;
-            labels.ForEach(label =>
+
+            label.vertices.ForEach(labelVertex =>
             {
-                label.vertices.ForEach(labelVertex =>
-                {
-                    int vIndex = labelVertex.index;
-                    var vColor = oldColors[vIndex];
-                    int lIndex = label.index;
+                int vIndex = labelVertex.index;
+                var vColor = oldColors[vIndex];
+                int lIndex = label.index;
 
-                    byte r = vColor.r;
-                    byte g = vColor.g;
-                    byte b = vColor.b;
-                    byte a = vColor.a;
+                byte r = vColor.r;
+                byte g = vColor.g;
+                byte b = vColor.b;
+                byte a = vColor.a;
 
-                    if (lIndex < 8) r |= (byte)(1 << lIndex);
-                    else if (lIndex < 16) g |= (byte)(1 << (lIndex - 8));
-                    else if (lIndex < 24) b |= (byte)(1 << (lIndex - 16));
-                    else if (lIndex < 32) a |= (byte)(1 << (lIndex - 24));
+                if (lIndex < 8) r |= (byte)(1 << lIndex);
+                else if (lIndex < 16) g |= (byte)(1 << (lIndex - 8));
+                else if (lIndex < 24) b |= (byte)(1 << (lIndex - 16));
+                else if (lIndex < 32) a |= (byte)(1 << (lIndex - 24));
 
-                    newColors[vIndex] = new Color32(r, g, b, a);
-                });
+                newColors[vIndex] = new Color32(r, g, b, a);
             });
 
             _artefact.Mesh.colors32 = newColors;
         }
 
-        private void RemoveLabelIndicesFromVerticesColor(List<Label> labels)
+        private void RemoveLabelIndicesFromVerticesColor(Label label)
         {
             var oldColors = _artefact.Mesh.colors32;
             var newColors = _artefact.Mesh.colors32;
-            labels.ForEach(label =>
+
+            label.vertices.ForEach(labelVertex =>
             {
-                label.vertices.ForEach(labelVertex =>
-                {
-                    int vIndex = labelVertex.index;
-                    var vColor = oldColors[vIndex];
-                    int lIndex = label.index;
+                int vIndex = labelVertex.index;
+                var vColor = oldColors[vIndex];
+                int lIndex = label.index;
 
-                    byte r = vColor.r;
-                    byte g = vColor.g;
-                    byte b = vColor.b;
-                    byte a = vColor.a;
+                byte r = vColor.r;
+                byte g = vColor.g;
+                byte b = vColor.b;
+                byte a = vColor.a;
 
-                    if (lIndex < 8) r &= (byte)~(1 << lIndex);
-                    else if (lIndex < 16) g &= (byte)~(1 << (lIndex - 8));
-                    else if (lIndex < 24) b &= (byte)~(1 << (lIndex - 16));
-                    else if (lIndex < 32) a &= (byte)~(1 << (lIndex - 24));
+                if (lIndex < 8) r &= (byte)~(1 << lIndex);
+                else if (lIndex < 16) g &= (byte)~(1 << (lIndex - 8));
+                else if (lIndex < 24) b &= (byte)~(1 << (lIndex - 16));
+                else if (lIndex < 32) a &= (byte)~(1 << (lIndex - 24));
 
-                    newColors[vIndex] = new Color32(r, g, b, a);
-                });
+                newColors[vIndex] = new Color32(r, g, b, a);
             });
 
             _artefact.Mesh.colors32 = newColors;
