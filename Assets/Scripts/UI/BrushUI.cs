@@ -16,8 +16,10 @@ namespace UI
         [SerializeField] private Transform contentHolder;
         [SerializeField] private Artefact artefact;
         [SerializeField] private Brush brush;
-        
+
         private readonly Dictionary<int, GameObject> _uiLabels = new();
+
+        private GameObject _activeLabel;
 
         private void Start()
         {
@@ -77,24 +79,35 @@ namespace UI
             _uiLabels[label.index] = uiLabel;
         }
 
+        /**
+         * If the active label is pressed, it is deactivated
+         * If another label is pressed, the current active label is also deactivated, and the pressed label is activated
+         */
         private void OnActivateButtonClick(int labelIndex)
         {
-            brush.ActivateLabel(labelIndex);
-        }
+            if (!_uiLabels.TryGetValue(labelIndex, out var uiLabel)) return;
 
-        public void UpdateActiveLabel(Label label)
-        {
-            if (!_uiLabels.TryGetValue(label.index, out var uiLabel)) return;
-            foreach (var (_, o) in _uiLabels)
+            // Deactivate old label
+            if (_activeLabel)
             {
-                var image = o.GetComponent<Image>();
+                var image = _activeLabel.GetComponent<Image>();
                 image.color = new Color32(255, 255, 255, 100);
             }
-            
-            var img = uiLabel.GetComponent<Image>();
-            img.color = new Color32(255, 0, 0, 100);
+
+            if (uiLabel == _activeLabel)
+            {
+                brush.ClearActiveLabel();
+                _activeLabel = null;
+            }
+            else // Activate new label
+            {
+                brush.ActivateLabel(labelIndex);
+                _activeLabel = uiLabel;
+                var img = _activeLabel.GetComponent<Image>();
+                img.color = new Color32(255, 0, 0, 100);
+            }
         }
-        
+
         private void EnsureHashPrefix(TMP_InputField colorField, Image colorImage)
         {
             if (!colorField.text.StartsWith("#"))
@@ -147,7 +160,7 @@ namespace UI
 
         private void OnDeleteButtonClick(int labelIndex)
         {
-            artefact.RemoveLabel(labelIndex);
+            brush.RemoveLabel(labelIndex);
         }
 
         private void OnVisibleToggleChanged(Toggle visibleToggle, int labelIndex)

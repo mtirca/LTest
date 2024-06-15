@@ -1,3 +1,4 @@
+using Global;
 using UI;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -10,6 +11,7 @@ namespace Pick.Mode
         [SerializeField] private Camera mainCamera;
         [SerializeField] private PixelUI ui;
         [SerializeField] private GameObject hitPointPrefab;
+        [SerializeField] private StateManager stateManager;
 
         private GameObject _hitPoint;
         private Vector3 _cursorPos;
@@ -21,7 +23,7 @@ namespace Pick.Mode
 
         private void Update()
         {
-            if (!Input.GetMouseButtonDown(0) || EventSystem.current.IsPointerOverGameObject()) return;
+            if (!Input.GetMouseButtonDown(0) || stateManager.State != State.Cursor) return;
 
             _cursorPos = Input.mousePosition;
 
@@ -32,8 +34,7 @@ namespace Pick.Mode
             Renderer rend = hit.transform.GetComponent<Renderer>();
             MeshCollider meshCollider = hit.collider as MeshCollider;
 
-            if (rend == null || rend.sharedMaterial == null || rend.sharedMaterial.mainTexture == null ||
-                meshCollider == null)
+            if (!rend || !rend.sharedMaterial || !rend.sharedMaterial.mainTexture || !meshCollider)
                 return;
 
             // Get color at crosshair
@@ -45,12 +46,8 @@ namespace Pick.Mode
             // Color square
             ui.ColorSquare.color = color;
 
-            if (Input.GetMouseButtonDown(0))
-            {
-                Destroy(_hitPoint);
-            }
-
             // Add new hit point
+            Destroy(_hitPoint);
             _hitPoint = Instantiate(hitPointPrefab, hit.point, Quaternion.identity);
         }
     }
