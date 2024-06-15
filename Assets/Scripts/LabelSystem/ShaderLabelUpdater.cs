@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using ArtefactSystem;
 using UnityEngine;
 
@@ -55,6 +56,29 @@ namespace LabelSystem
             _artefact.Labels.ForEach(AddLabelIndicesToVerticesColor);
         }
 
+        /**
+         * Updates label in shader to match the color and visibility of label given as parameter
+         */
+        public void UpdateLabelColor(Label label)
+        {
+            var colorArray = _colorArray;
+            colorArray[label.index] = label.color;
+            ColorArray = colorArray;
+        }
+
+        /**
+         * Updates labels in shader to match the colors and visibilities of labels given as parameter
+         */
+        public void UpdateLabelColors(List<Label> labels)
+        {
+            var colorArray = _colorArray;
+            labels.ForEach(label =>
+            {
+                colorArray[label.index] = label.color;
+            });
+            ColorArray = colorArray;
+        }
+        
         public void RemoveShaderLabel(Label label)
         {
             // Remove labels from shader
@@ -65,13 +89,12 @@ namespace LabelSystem
             RemoveLabelIndicesFromVerticesColor(label);
         }
 
+        /**
+         * Updates label in shader by updating the color and vertices of the label
+         */
         public void UpdateShaderLabel(Label label)
         {
-            // Add labels to shader
-            var colorArray = _colorArray;
-            colorArray[label.index] = label.color;
-            ColorArray = colorArray;
-
+            UpdateLabelColor(label);
             AddLabelIndicesToVerticesColor(label);
         }
 

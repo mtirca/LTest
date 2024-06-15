@@ -41,9 +41,9 @@ namespace Player
                     _orbitingMovement.enabled = false;
                     break;
                 case State.FreeMovement:
-                    _orbitingMovement.enabled = false;
                     _keyMovement.enabled = true;
                     _mouseMovement.enabled = true;
+                    _orbitingMovement.enabled = false;
                     break;
                 case State.OrbitingMovement:
                     _keyMovement.enabled = false;

@@ -15,8 +15,6 @@ namespace Pick.Mode
             get => _value;
             private set
             {
-                if (stateManager.State != State.Cursor) return;
-
                 var oldValue = _value;
                 if (oldValue == value) return;
 
@@ -78,6 +76,7 @@ namespace Pick.Mode
          */
         private void ChangePickMode()
         {
+            if (stateManager.State != State.Cursor) return;
             if (Input.GetKeyDown(KeyCode.Alpha1))
             {
                 Value = PickMode.None;

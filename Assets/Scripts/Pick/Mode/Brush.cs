@@ -1,8 +1,9 @@
+using System;
 using ArtefactSystem;
+using Global;
 using LabelSystem;
 using UnityEngine;
 using UI;
-using UnityEngine.EventSystems;
 
 namespace Pick.Mode
 {
@@ -11,7 +12,7 @@ namespace Pick.Mode
         [SerializeField] private Picker picker;
         [SerializeField] private Camera mainCamera;
         [SerializeField] private BrushUI ui;
-
+        [SerializeField] private StateManager stateManager;
         [SerializeField] private Artefact artefact;
 
         // in screen space
@@ -20,16 +21,6 @@ namespace Pick.Mode
         private Vector3 _cursorPos;
 
         private Label _activeLabel;
-
-        private Label ActiveLabel
-        {
-            get => _activeLabel;
-            set
-            {
-                _activeLabel = value;
-                if (value != null) ui.UpdateActiveLabel(value);
-            }
-        }
 
         private bool _quitting;
 
@@ -41,10 +32,12 @@ namespace Pick.Mode
         private void OnDisable()
         {
             if (_quitting) return;
-            if (_activeLabel != null)
-            {
-                artefact.ShaderUpdater.RemoveShaderLabel(_activeLabel);
-            }
+            artefact.HideAllLabels();
+        }
+
+        private void OnEnable()
+        {
+            artefact.ShowAllLabels();
         }
 
         private void OnApplicationQuit()
@@ -55,16 +48,29 @@ namespace Pick.Mode
         public void NewLabel()
         {
             //todo handle over 32
-            var newLabel = artefact.NewLabel();
-            Debug.Log($"Old value: {_activeLabel}; New value: {newLabel}");
-            ActiveLabel = newLabel;
+            artefact.NewLabel();
         }
 
         public void ActivateLabel(int labelIndex)
         {
             var label = artefact.FindLabel(labelIndex);
-            Debug.Log($"Old value: {_activeLabel}; New value: {label}");
-            ActiveLabel = label;
+            _activeLabel = label;
+        }
+
+        public void RemoveLabel(int labelIndex)
+        {
+            var label = artefact.FindLabel(labelIndex);
+            if (_activeLabel == label)
+            {
+                _activeLabel = null;
+            }
+
+            artefact.RemoveLabel(label);
+        }
+
+        public void ClearActiveLabel()
+        {
+            _activeLabel = null;
         }
 
         public void UpdateLabel(int labelIndex, string newName, string newDescription, Color newColor)
@@ -74,20 +80,21 @@ namespace Pick.Mode
 
         private void Update()
         {
-            _cursorPos = Input.mousePosition;
+            if (_activeLabel == null || !Input.GetMouseButton(0) || stateManager.State != State.Cursor) return;
+            // EventSystem.current.IsPointerOverGameObject()) return;
 
-            if (ActiveLabel == null || !Input.GetMouseButton(0)) return;
-                // EventSystem.current.IsPointerOverGameObject()) return;
+            _cursorPos = Input.mousePosition;
 
             var aTransform = artefact.transform;
             var vertices = artefact.Mesh.vertices;
             var cameraPosition = mainCamera.transform.position;
             var triangles = artefact.Mesh.triangles;
+            var paintedThisFrame = false;
 
             for (var i = 0; i < vertices.Length; i++)
             {
                 // check it hasn't been painted already
-                if (ActiveLabel.IsVertexPresent(i)) continue;
+                if (_activeLabel.IsVertexPresent(i)) continue;
 
                 Vector3 worldVertex = aTransform.TransformPoint(vertices[i]);
 
@@ -129,10 +136,11 @@ namespace Pick.Mode
 
                 #endregion
 
-                ActiveLabel.vertices.Add(new LabelVertex(i, vertices[i]));
+                _activeLabel.vertices.Add(new LabelVertex(i, vertices[i]));
+                paintedThisFrame = true;
             }
 
-            artefact.ShaderUpdater.UpdateShaderLabel(ActiveLabel);
+            if (paintedThisFrame) artefact.ShaderUpdater.UpdateShaderLabel(_activeLabel);
         }
     }
 }

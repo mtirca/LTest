@@ -43,16 +43,34 @@ namespace ArtefactSystem
         {
             var label = FindLabel(labelIndex);
             label.color.a = 0;
-            ShaderUpdater.UpdateShaderLabel(label);
+            ShaderUpdater.UpdateLabelColor(label);
         }
-
+        
         public void ShowLabel(int labelIndex)
         {
             var label = FindLabel(labelIndex);
             label.color.a = 1;
-            ShaderUpdater.UpdateShaderLabel(label);
+            ShaderUpdater.UpdateLabelColor(label);
         }
 
+        public void HideAllLabels()
+        {
+            Labels.ForEach(label =>
+            {
+                label.color.a = 0;
+            });
+            ShaderUpdater.UpdateLabelColors(Labels);
+        }
+
+        public void ShowAllLabels()
+        {
+            Labels.ForEach(label =>
+            {
+                label.color.a = 1;
+            });
+            ShaderUpdater.UpdateLabelColors(Labels);
+        }
+        
         private void Update()
         {
             return;
@@ -110,12 +128,6 @@ namespace ArtefactSystem
                 new LabelsChangedEventArgs { Type = LabelEvent.Remove, Items = new List<Label> { label } });
         }
 
-        public void RemoveLabel(int labelIndex)
-        {
-            var label = FindLabel(labelIndex);
-            RemoveLabel(label);
-        }
-
         public void UpdateLabel(int labelIndex, string newName, string newDescription, Color newColor)
         {
             if (!LabelExists(labelIndex))
@@ -129,6 +141,8 @@ namespace ArtefactSystem
             Labels[listIndex].name = newName;
             Labels[listIndex].description = newDescription;
             Labels[listIndex].color = newColor;
+            
+            ShaderUpdater.UpdateLabelColor(Labels[listIndex]);
             
             LabelJsonUtil.Save(Labels);
 
