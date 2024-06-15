@@ -135,7 +135,7 @@ namespace Pick.Mode
 
                 #endregion
 
-                _activeLabel.vertices.Add(new LabelVertex(i, vertices[i]));
+                _activeLabel.vertices.Add(i);
                 paintedThisFrame = true;
             }
 

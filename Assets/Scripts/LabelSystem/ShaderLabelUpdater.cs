@@ -94,9 +94,8 @@ namespace LabelSystem
             var oldColors = _artefact.Mesh.colors32;
             var newColors = _artefact.Mesh.colors32;
 
-            label.vertices.ForEach(labelVertex =>
+            label.vertices.ForEach(vIndex =>
             {
-                int vIndex = labelVertex.index;
                 var vColor = oldColors[vIndex];
                 int lIndex = label.index;
 
@@ -121,9 +120,8 @@ namespace LabelSystem
             var oldColors = _artefact.Mesh.colors32;
             var newColors = _artefact.Mesh.colors32;
             
-            label.vertices.ForEach(labelVertex =>
+            label.vertices.ForEach(vIndex =>
             {
-                int vIndex = labelVertex.index;
                 var vColor = oldColors[vIndex];
                 int lIndex = label.index;
 
