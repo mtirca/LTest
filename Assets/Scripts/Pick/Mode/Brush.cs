@@ -1,4 +1,3 @@
-using System;
 using ArtefactSystem;
 using Global;
 using LabelSystem;
@@ -140,7 +139,7 @@ namespace Pick.Mode
                 paintedThisFrame = true;
             }
 
-            if (paintedThisFrame) artefact.ShaderUpdater.UpdateShaderLabel(_activeLabel);
+            if (paintedThisFrame) artefact.ShaderUpdater.AddVertices(_activeLabel);
         }
     }
 }

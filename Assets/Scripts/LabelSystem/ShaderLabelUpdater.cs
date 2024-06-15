@@ -53,7 +53,7 @@ namespace LabelSystem
             ColorArray = colorArray;
 
             // add label indices to vertex color
-            _artefact.Labels.ForEach(AddLabelIndicesToVerticesColor);
+            _artefact.Labels.ForEach(AddVertices);
         }
 
         /**
@@ -89,16 +89,7 @@ namespace LabelSystem
             RemoveLabelIndicesFromVerticesColor(label);
         }
 
-        /**
-         * Updates label in shader by updating the color and vertices of the label
-         */
-        public void UpdateShaderLabel(Label label)
-        {
-            UpdateLabelColor(label);
-            AddLabelIndicesToVerticesColor(label);
-        }
-
-        private void AddLabelIndicesToVerticesColor(Label label)
+        public void AddVertices(Label label)
         {
             var oldColors = _artefact.Mesh.colors32;
             var newColors = _artefact.Mesh.colors32;
@@ -129,7 +120,7 @@ namespace LabelSystem
         {
             var oldColors = _artefact.Mesh.colors32;
             var newColors = _artefact.Mesh.colors32;
-
+            
             label.vertices.ForEach(labelVertex =>
             {
                 int vIndex = labelVertex.index;
