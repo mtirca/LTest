@@ -14,9 +14,9 @@ namespace LabelSystem
         public string name;
         public string description;
         public Color color;
-        public List<LabelVertex> vertices;
+        public List<int> vertices;
 
-        public Label(int index, string name, string description, Color color, List<LabelVertex> vertices)
+        public Label(int index, string name, string description, Color color, List<int> vertices)
         {
             this.index = index;
             this.name = name;
@@ -25,7 +25,7 @@ namespace LabelSystem
             this.vertices = vertices;
         }
 
-        public Label(int index) : this(index, "", "", ColorUtil.RandomColor(), new List<LabelVertex>()) {}
+        public Label(int index) : this(index, "", "", ColorUtil.RandomColor(), new List<int>()) {}
 
         public bool IsVisible()
         {
@@ -47,7 +47,7 @@ namespace LabelSystem
          */
         public bool IsVertexPresent(int vIndex)
         {
-            return vertices.Exists(vertex => vertex.index == vIndex);
+            return vertices.Exists(vertex => vertex == vIndex);
         }
     }
 }
