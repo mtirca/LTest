@@ -164,7 +164,10 @@ namespace ArtefactSystem
 
             // Add label to list
             Labels.Add(newLabel);
-
+            
+            // Add color to shader
+            ShaderUpdater.UpdateLabelColor(newLabel);
+            
             // Add label to disk
             LabelJsonUtil.Save(Labels);
             
