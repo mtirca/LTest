@@ -23,7 +23,8 @@ namespace Pick.Mode
 
         private void Update()
         {
-            if (!Input.GetMouseButtonDown(0) || stateManager.State != State.Cursor) return;
+            if (!Input.GetMouseButtonDown(0) || stateManager.State != State.Cursor ||
+                EventSystem.current.IsPointerOverGameObject()) return;
 
             _cursorPos = Input.mousePosition;
 
