@@ -76,7 +76,15 @@ namespace UI
             var uiActivateButton = uiLabel.transform.Find("ActivateButton").GetComponent<Button>();
             uiActivateButton.onClick.AddListener(delegate { OnActivateButtonClick(label.index); });
 
+            var uiGraphButton = uiLabel.transform.Find("GraphButton").GetComponent<Button>();
+            uiGraphButton.onClick.AddListener(delegate { OnGenerateGraphButtonClick(label.index); });
+            
             _uiLabels[label.index] = uiLabel;
+        }
+
+        private void OnGenerateGraphButtonClick(int labelIndex)
+        {
+            //todo
         }
 
         /**
