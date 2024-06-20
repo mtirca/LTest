@@ -50,7 +50,7 @@ namespace ArtefactSystem
             int y = Mathf.FloorToInt(uv.y * Texture.height);
             return Texture.GetPixel(x, y);
         }
-        
+
         public Label FindLabel(int labelIndex)
         {
             return Labels.Find(l => l.index == labelIndex);
@@ -60,6 +60,8 @@ namespace ArtefactSystem
         {
             var label = FindLabel(labelIndex);
             label.color.a = 0;
+            LabelsChanged?.Invoke(this,
+                new LabelsChangedEventArgs { Type = LabelEvent.VisibleUpdate, Items = new List<Label> { label } });
             ShaderUpdater.UpdateLabelColor(label);
         }
 
@@ -67,19 +69,9 @@ namespace ArtefactSystem
         {
             var label = FindLabel(labelIndex);
             label.color.a = 1;
+            LabelsChanged?.Invoke(this,
+                new LabelsChangedEventArgs { Type = LabelEvent.VisibleUpdate, Items = new List<Label> { label } });
             ShaderUpdater.UpdateLabelColor(label);
-        }
-
-        public void HideAllLabels()
-        {
-            Labels.ForEach(label => { label.color.a = 0; });
-            ShaderUpdater.UpdateLabelColors(Labels);
-        }
-
-        public void ShowAllLabels()
-        {
-            Labels.ForEach(label => { label.color.a = 1; });
-            ShaderUpdater.UpdateLabelColors(Labels);
         }
 
         private void Update()

@@ -184,6 +184,16 @@ namespace UI
             }
         }
 
+        private void UpdateVisibleToggleUI(List<Label> labels)
+        {
+            foreach (var label in labels)
+            {
+                if (!_uiLabels.TryGetValue(label.index, out var uiLabel)) return;
+                var uiVisibleToggle = uiLabel.transform.Find("VisibleToggle").GetComponent<Toggle>();
+                uiVisibleToggle.isOn = label.IsVisible();
+            }
+        }
+        
         public void OnNewLabelClick()
         {
             brush.NewLabel();
@@ -200,6 +210,9 @@ namespace UI
                 }
                 case LabelEvent.Remove:
                     RemoveUILabels(args.Items);
+                    break;
+                case LabelEvent.VisibleUpdate:
+                    UpdateVisibleToggleUI(args.Items);
                     break;
                 case LabelEvent.Update:
                     // ModifyUILabels();

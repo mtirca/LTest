@@ -32,12 +32,14 @@ namespace Pick.Mode
         private void OnDisable()
         {
             if (_quitting) return;
-            artefact.HideAllLabels();
+            // artefact.HideAllLabels();
+            artefact.ShaderUpdater.HideLabels();
         }
 
         private void OnEnable()
         {
-            artefact.ShowAllLabels();
+            // artefact.ShowAllLabels();
+            artefact.ShaderUpdater.ShowLabels();
         }
 
         private void OnApplicationQuit()
