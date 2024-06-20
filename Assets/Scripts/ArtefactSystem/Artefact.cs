@@ -12,7 +12,7 @@ namespace ArtefactSystem
         public Renderer Renderer { get; private set; }
         private MeshFilter MeshFilter { get; set; }
         public Mesh Mesh => MeshFilter.sharedMesh;
-
+        public MeshCollider MeshCollider { get; private set; }
         public Texture2D Texture => Renderer.material.mainTexture as Texture2D;
         public List<Label> Labels { get; private set; }
 
@@ -30,6 +30,7 @@ namespace ArtefactSystem
         {
             Renderer = GetComponent<Renderer>();
             MeshFilter = GetComponent<MeshFilter>();
+            MeshCollider = GetComponent<MeshCollider>();
             ShaderUpdater = GetComponent<ShaderLabelUpdater>();
             InitVertexColors();
             InitLabels();

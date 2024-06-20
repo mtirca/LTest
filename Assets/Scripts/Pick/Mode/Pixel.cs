@@ -1,13 +1,12 @@
+using ArtefactSystem;
 using Global;
 using UI;
 using UnityEngine;
-using UnityEngine.EventSystems;
 
 namespace Pick.Mode
 {
     public class Pixel : MonoBehaviour
     {
-        [SerializeField] private Picker picker;
         [SerializeField] private Camera mainCamera;
         [SerializeField] private PixelUI ui;
         [SerializeField] private GameObject hitPointPrefab;
@@ -23,8 +22,7 @@ namespace Pick.Mode
 
         private void Update()
         {
-            if (!Input.GetMouseButtonDown(0) || stateManager.State != State.Cursor ||
-                EventSystem.current.IsPointerOverGameObject()) return;
+            if (!Input.GetMouseButtonDown(0) || stateManager.State != State.Cursor) return;
 
             _cursorPos = Input.mousePosition;
 
@@ -32,19 +30,26 @@ namespace Pick.Mode
             if (!Physics.Raycast(ray, out RaycastHit hit))
                 return;
 
-            Renderer rend = hit.transform.GetComponent<Renderer>();
-            MeshCollider meshCollider = hit.collider as MeshCollider;
-
-            if (!rend || !rend.sharedMaterial || !rend.sharedMaterial.mainTexture || !meshCollider)
+            Artefact artefact = hit.collider.GetComponent<Artefact>();
+            if (!artefact)
+            {
+                Debug.Log("Hit a non-artefact object");
                 return;
+            }
+
+            if (!artefact.Renderer || !artefact.Renderer.sharedMaterial ||
+                !artefact.Renderer.sharedMaterial.mainTexture || !artefact.MeshCollider)
+            {
+                Debug.LogError("Artefact does not have a renderer, material, texture or mesh collider");
+                return;
+            }
 
             // Get color at crosshair
-            Texture2D tex = rend.material.mainTexture as Texture2D;
             Vector2 pixelUV = hit.textureCoord;
-            pixelUV.x *= tex.width;
-            pixelUV.y *= tex.height;
-            Color color = tex.GetPixel((int)pixelUV.x, (int)pixelUV.y);
-            // Color square
+            pixelUV.x *= artefact.Texture.width;
+            pixelUV.y *= artefact.Texture.height;
+            Color color = artefact.Texture.GetPixel((int)pixelUV.x, (int)pixelUV.y);
+
             ui.ColorSquare.color = color;
 
             // Add new hit point

@@ -3,25 +3,20 @@ using Global;
 using LabelSystem;
 using UnityEngine;
 using UI;
-using UnityEngine.EventSystems;
 
 namespace Pick.Mode
 {
     public class Brush : MonoBehaviour
     {
-        [SerializeField] private Picker picker;
         [SerializeField] private Camera mainCamera;
         [SerializeField] private BrushUI ui;
         [SerializeField] private StateManager stateManager;
         [SerializeField] private Artefact artefact;
-
         // in screen space
         [SerializeField] private double brushRadius = 15;
 
         private Vector3 _cursorPos;
-
         private Label _activeLabel;
-
         private bool _quitting;
 
         private void Awake()
