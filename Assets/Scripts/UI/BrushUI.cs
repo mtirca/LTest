@@ -16,7 +16,8 @@ namespace UI
         [SerializeField] private Transform contentHolder;
         [SerializeField] private Artefact artefact;
         [SerializeField] private Brush brush;
-
+        [SerializeField] private RGBHistogram rgbHistogram;
+        
         private readonly Dictionary<int, GameObject> _uiLabels = new();
 
         private GameObject _activeLabel;
@@ -84,7 +85,7 @@ namespace UI
 
         private void OnGenerateGraphButtonClick(int labelIndex)
         {
-            //todo
+            rgbHistogram.CreateWindow(labelIndex);
         }
 
         /**

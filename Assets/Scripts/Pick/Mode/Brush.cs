@@ -80,8 +80,7 @@ namespace Pick.Mode
 
         private void Update()
         {
-            if (_activeLabel == null || !Input.GetMouseButton(0) || stateManager.State != State.Cursor ||
-                EventSystem.current.IsPointerOverGameObject()) return;
+            if (_activeLabel == null || !Input.GetMouseButton(0) || stateManager.State != State.Cursor) return;
 
             _cursorPos = Input.mousePosition;
 
