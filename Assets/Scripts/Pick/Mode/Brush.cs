@@ -50,6 +50,7 @@ namespace Pick.Mode
 
         public void ActivateLabel(int labelIndex)
         {
+            artefact.ShowLabel(labelIndex);
             var label = artefact.FindLabel(labelIndex);
             _activeLabel = label;
         }
