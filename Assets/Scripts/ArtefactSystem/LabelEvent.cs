@@ -2,6 +2,6 @@ namespace ArtefactSystem
 {
     public enum LabelEvent
     {
-        Add, Remove, Update
+        Add, Remove, Update, VisibleUpdate
     }
 }

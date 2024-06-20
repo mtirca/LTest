@@ -21,6 +21,7 @@ namespace UI
 
         public void CreateWindow(int labelIndex)
         {
+            Destroy(_window);
             _window = Instantiate(windowPrefab, gameObject.transform);
             _histogram = _window.GetComponentInChildren<LineChart>();
 

@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using ArtefactSystem;
 using UnityEngine;
 
@@ -7,7 +6,7 @@ namespace LabelSystem
     [RequireComponent(typeof(Artefact))]
     public class ShaderLabelUpdater : MonoBehaviour
     {
-        private Artefact _artefact;
+        [SerializeField] private Artefact artefact;
 
         private Color[] _colorArray;
 
@@ -17,7 +16,7 @@ namespace LabelSystem
             set
             {
                 _colorArray = value;
-                _artefact.Renderer.material.SetColorArray(_colorArrayId, value);
+                artefact.Renderer.material.SetColorArray(_colorArrayId, value);
             }
         }
 
@@ -26,7 +25,6 @@ namespace LabelSystem
 
         private void Awake()
         {
-            _artefact = GetComponent<Artefact>();
             _colorArrayId = Shader.PropertyToID("_ColorArray");
         }
 
@@ -46,14 +44,14 @@ namespace LabelSystem
             var black = new Color(0, 0, 0, 0);
             for (var i = 0; i < Label.Max; i++)
             {
-                var color = _artefact.Labels.Find(label => label.index == i)?.color ?? black;
+                var color = artefact.Labels.Find(label => label.index == i)?.color ?? black;
                 colorArray[i] = color;
             }
 
             ColorArray = colorArray;
 
             // add label indices to vertex color
-            _artefact.Labels.ForEach(AddVertices);
+            artefact.Labels.ForEach(AddVertices);
         }
 
         /**
@@ -67,15 +65,35 @@ namespace LabelSystem
         }
 
         /**
-         * Updates labels in shader to match the colors and visibilities of labels given as parameter
+         * Hide Labels (make them invisible in shader)
+         * Note that this does not make them invisible in application's code
          */
-        public void UpdateLabelColors(List<Label> labels)
+        public void HideLabels()
         {
             var colorArray = _colorArray;
-            labels.ForEach(label =>
+            foreach (var label in artefact.Labels)
             {
-                colorArray[label.index] = label.color;
-            });
+                var color = colorArray[label.index];
+                colorArray[label.index] = new Color(color.r, color.g, color.b, 0);
+            }
+
+            ColorArray = colorArray;
+        }
+
+        /**
+         * Show Labels (make them visible in shader)
+         * Note that this restores the shader's colors' visibilities to match the visibility of labels in application,
+         * it does not make all labels visible
+         */
+        public void ShowLabels()
+        {
+            var colorArray = _colorArray;
+            foreach (var label in artefact.Labels)
+            {
+                var color = colorArray[label.index];
+                colorArray[label.index] = new Color(color.r, color.g, color.b, label.color.a);
+            }
+
             ColorArray = colorArray;
         }
         
@@ -91,8 +109,8 @@ namespace LabelSystem
 
         public void AddVertices(Label label)
         {
-            var oldColors = _artefact.Mesh.colors32;
-            var newColors = _artefact.Mesh.colors32;
+            var oldColors = artefact.Mesh.colors32;
+            var newColors = artefact.Mesh.colors32;
 
             label.vertices.ForEach(vIndex =>
             {
@@ -112,14 +130,14 @@ namespace LabelSystem
                 newColors[vIndex] = new Color32(r, g, b, a);
             });
 
-            _artefact.Mesh.colors32 = newColors;
+            artefact.Mesh.colors32 = newColors;
         }
 
         private void RemoveLabelIndicesFromVerticesColor(Label label)
         {
-            var oldColors = _artefact.Mesh.colors32;
-            var newColors = _artefact.Mesh.colors32;
-            
+            var oldColors = artefact.Mesh.colors32;
+            var newColors = artefact.Mesh.colors32;
+
             label.vertices.ForEach(vIndex =>
             {
                 var vColor = oldColors[vIndex];
@@ -138,7 +156,7 @@ namespace LabelSystem
                 newColors[vIndex] = new Color32(r, g, b, a);
             });
 
-            _artefact.Mesh.colors32 = newColors;
+            artefact.Mesh.colors32 = newColors;
         }
     }
 }
