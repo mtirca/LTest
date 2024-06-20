@@ -17,10 +17,10 @@ namespace UI
         [SerializeField] private Artefact artefact;
         [SerializeField] private Brush brush;
         [SerializeField] private RGBHistogram rgbHistogram;
-        
-        private readonly Dictionary<int, GameObject> _uiLabels = new();
 
-        private GameObject _activeLabel;
+        private readonly Dictionary<int, UILabel> _uiLabels = new();
+
+        private UILabel _activeLabel;
 
         private void Start()
         {
@@ -38,48 +38,57 @@ namespace UI
             labels.ForEach(AddUILabel);
         }
 
+        private static Color ToUIColor(Color color)
+        {
+            return new Color(color.r, color.g, color.b, 1);
+        }
+
         private void AddUILabel(Label label)
         {
-            var uiLabel = Instantiate(labelPrefab, contentHolder);
-
-            var uiLabelName = uiLabel.transform.Find("Name").GetComponent<TMP_InputField>();
-            uiLabelName.text = label.name;
-
-            var uiLabelDescription = uiLabel.transform.Find("Description").GetComponent<TMP_InputField>();
-            uiLabelDescription.text = label.description;
-
-            var uiLabelColor = uiLabel.transform.Find("Color").GetComponent<Image>();
-            var uiColor = label.color;
-            uiColor.a = 1;
-            uiLabelColor.color = uiColor;
-
-            var uiColorField = uiLabel.transform.Find("ColorField").GetComponent<TMP_InputField>();
-            uiColorField.text = "#" + ColorUtility.ToHtmlStringRGB(label.color);
-            uiColorField.onValueChanged.AddListener(delegate { OnColorFieldChanged(uiColorField, uiLabelColor); });
-            uiColorField.onValueChanged.AddListener(delegate { EnsureHashPrefix(uiColorField, uiLabelColor); });
-
-            var uiDeleteButton = uiLabel.transform.Find("DeleteButton").GetComponent<Button>();
-            uiDeleteButton.onClick.AddListener(delegate { OnDeleteButtonClick(label.index); });
-
-            var uiVisibleToggle = uiLabel.transform.Find("VisibleToggle").GetComponent<Toggle>();
-            uiVisibleToggle.isOn = label.IsVisible();
-            uiVisibleToggle.onValueChanged.AddListener(delegate
+            var uiLabel = new UILabel(labelPrefab, contentHolder)
             {
-                OnVisibleToggleChanged(uiVisibleToggle, label.index);
-            });
+                Name =
+                {
+                    text = label.name
+                },
+                Description =
+                {
+                    text = label.description
+                },
+                Color =
+                {
+                    color = ToUIColor(label.color)
+                },
+                ColorField =
+                {
+                    text = "#" + ColorUtility.ToHtmlStringRGB(label.color)
+                },
+                VisibleToggle =
+                {
+                    isOn = label.IsVisible()
+                }
+            };
 
-            var uiApplyButton = uiLabel.transform.Find("ApplyButton").GetComponent<Button>();
-            uiApplyButton.onClick.AddListener(delegate
+            uiLabel.ColorField.onValueChanged.AddListener(delegate
             {
-                OnApplyButtonClick(label.index, uiLabelName, uiLabelDescription, uiColorField);
+                OnColorFieldChanged(uiLabel.ColorField, uiLabel.Color);
             });
+            uiLabel.ColorField.onValueChanged.AddListener(delegate
+            {
+                EnsureHashPrefix(uiLabel.ColorField, uiLabel.Color);
+            });
+            uiLabel.DeleteButton.onClick.AddListener(delegate { OnDeleteButtonClick(label.index); });
+            uiLabel.VisibleToggle.onValueChanged.AddListener(delegate
+            {
+                OnVisibleToggleChanged(uiLabel.VisibleToggle, label.index);
+            });
+            uiLabel.ApplyButton.onClick.AddListener(delegate
+            {
+                OnApplyButtonClick(label.index, uiLabel.Name, uiLabel.Description, uiLabel.ColorField);
+            });
+            uiLabel.ActivateButton.onClick.AddListener(delegate { OnActivateButtonClick(label.index); });
+            uiLabel.GraphButton.onClick.AddListener(delegate { OnGenerateGraphButtonClick(label.index); });
 
-            var uiActivateButton = uiLabel.transform.Find("ActivateButton").GetComponent<Button>();
-            uiActivateButton.onClick.AddListener(delegate { OnActivateButtonClick(label.index); });
-
-            var uiGraphButton = uiLabel.transform.Find("GraphButton").GetComponent<Button>();
-            uiGraphButton.onClick.AddListener(delegate { OnGenerateGraphButtonClick(label.index); });
-            
             _uiLabels[label.index] = uiLabel;
         }
 
@@ -97,9 +106,9 @@ namespace UI
             if (!_uiLabels.TryGetValue(labelIndex, out var uiLabel)) return;
 
             // Deactivate old label
-            if (_activeLabel)
+            if (_activeLabel?.Object)
             {
-                var image = _activeLabel.GetComponent<Image>();
+                var image = _activeLabel.Object.GetComponent<Image>();
                 image.color = new Color32(255, 255, 255, 100);
             }
 
@@ -112,7 +121,7 @@ namespace UI
             {
                 brush.ActivateLabel(labelIndex);
                 _activeLabel = uiLabel;
-                var img = _activeLabel.GetComponent<Image>();
+                var img = _activeLabel.Object.GetComponent<Image>();
                 img.color = new Color32(255, 0, 0, 100);
             }
         }
@@ -159,12 +168,23 @@ namespace UI
 
         private void RemoveUILabels(List<Label> labels)
         {
-            labels.ForEach(label =>
+            foreach (var label in labels)
             {
                 if (!_uiLabels.TryGetValue(label.index, out var uiLabel)) return;
-                Destroy(uiLabel);
+                Destroy(uiLabel.Object);
                 _uiLabels.Remove(label.index);
-            });
+            }
+        }
+
+        private void UpdateUILabels(List<Label> labels)
+        {
+            foreach (var label in labels)
+            {
+                if (!_uiLabels.TryGetValue(label.index, out var uiLabel)) return;
+                uiLabel.Name.text = label.name;
+                uiLabel.Description.text = label.description;
+                uiLabel.Color.color = ToUIColor(label.color);
+            }
         }
 
         private void OnDeleteButtonClick(int labelIndex)
@@ -189,11 +209,10 @@ namespace UI
             foreach (var label in labels)
             {
                 if (!_uiLabels.TryGetValue(label.index, out var uiLabel)) return;
-                var uiVisibleToggle = uiLabel.transform.Find("VisibleToggle").GetComponent<Toggle>();
-                uiVisibleToggle.isOn = label.IsVisible();
+                uiLabel.VisibleToggle.isOn = label.IsVisible();
             }
         }
-        
+
         public void OnNewLabelClick()
         {
             brush.NewLabel();
@@ -215,7 +234,7 @@ namespace UI
                     UpdateVisibleToggleUI(args.Items);
                     break;
                 case LabelEvent.Update:
-                    // ModifyUILabels();
+                    UpdateUILabels(args.Items);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
