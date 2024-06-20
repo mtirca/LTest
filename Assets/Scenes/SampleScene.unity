@@ -471,6 +471,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6aa379a0a4264606bb0e521b233c8491, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  artefact: {fileID: 616170884}
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
@@ -854,7 +855,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b42f91164b874c6084a5f31573ca917a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  picker: {fileID: 936485326}
   mainCamera: {fileID: 963194227}
   ui: {fileID: 2002373877}
   stateManager: {fileID: 58393048}
@@ -919,7 +919,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 69c16b83842d41545b8a1ea1d8df045a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  picker: {fileID: 936485326}
   mainCamera: {fileID: 963194227}
   ui: {fileID: 1999945510}
   hitPointPrefab: {fileID: 1959113024694188513, guid: 2b3f10b06219f6c4fbee0b5ad8b8a928, type: 3}
