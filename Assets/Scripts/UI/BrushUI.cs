@@ -223,10 +223,8 @@ namespace UI
             switch (args.Type)
             {
                 case LabelEvent.Add:
-                {
                     AddUILabels(args.Items);
                     break;
-                }
                 case LabelEvent.Remove:
                     RemoveUILabels(args.Items);
                     break;
@@ -237,7 +235,7 @@ namespace UI
                     UpdateUILabels(args.Items);
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException();
+                    throw new ArgumentOutOfRangeException(nameof(args.Type));
             }
         }
     }
