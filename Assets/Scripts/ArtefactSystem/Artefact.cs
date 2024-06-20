@@ -13,6 +13,7 @@ namespace ArtefactSystem
         private MeshFilter MeshFilter { get; set; }
         public Mesh Mesh => MeshFilter.sharedMesh;
 
+        public Texture2D Texture => Renderer.material.mainTexture as Texture2D;
         public List<Label> Labels { get; private set; }
 
         public ShaderLabelUpdater ShaderUpdater { get; private set; }
@@ -34,6 +35,22 @@ namespace ArtefactSystem
             InitLabels();
         }
 
+        /**
+         * <returns>The Colors of the vertices of label with labelIndex</returns>
+         */
+        public List<Color32> GetLabelVerticesColors(int labelIndex)
+        {
+            return FindLabel(labelIndex).vertices.Select(GetTextureColorAtVertex).ToList();
+        }
+
+        private Color32 GetTextureColorAtVertex(int vIndex)
+        {
+            Vector2 uv = Mesh.uv[vIndex];
+            int x = Mathf.FloorToInt(uv.x * Texture.width);
+            int y = Mathf.FloorToInt(uv.y * Texture.height);
+            return Texture.GetPixel(x, y);
+        }
+        
         public Label FindLabel(int labelIndex)
         {
             return Labels.Find(l => l.index == labelIndex);
@@ -45,7 +62,7 @@ namespace ArtefactSystem
             label.color.a = 0;
             ShaderUpdater.UpdateLabelColor(label);
         }
-        
+
         public void ShowLabel(int labelIndex)
         {
             var label = FindLabel(labelIndex);
@@ -55,22 +72,16 @@ namespace ArtefactSystem
 
         public void HideAllLabels()
         {
-            Labels.ForEach(label =>
-            {
-                label.color.a = 0;
-            });
+            Labels.ForEach(label => { label.color.a = 0; });
             ShaderUpdater.UpdateLabelColors(Labels);
         }
 
         public void ShowAllLabels()
         {
-            Labels.ForEach(label =>
-            {
-                label.color.a = 1;
-            });
+            Labels.ForEach(label => { label.color.a = 1; });
             ShaderUpdater.UpdateLabelColors(Labels);
         }
-        
+
         private void Update()
         {
             return;
@@ -109,7 +120,7 @@ namespace ArtefactSystem
         {
             var labels = LabelJsonUtil.Load().ToList();
             Labels = new List<Label>(labels);
-            
+
             LabelsChanged?.Invoke(this, new LabelsChangedEventArgs { Type = LabelEvent.Add, Items = labels });
         }
 
@@ -123,7 +134,7 @@ namespace ArtefactSystem
 
             // Remove label from disk
             LabelJsonUtil.Save(Labels);
-            
+
             LabelsChanged?.Invoke(this,
                 new LabelsChangedEventArgs { Type = LabelEvent.Remove, Items = new List<Label> { label } });
         }
@@ -141,9 +152,9 @@ namespace ArtefactSystem
             Labels[listIndex].name = newName;
             Labels[listIndex].description = newDescription;
             Labels[listIndex].color = newColor;
-            
+
             ShaderUpdater.UpdateLabelColor(Labels[listIndex]);
-            
+
             LabelJsonUtil.Save(Labels);
 
             LabelsChanged?.Invoke(this,
@@ -153,7 +164,7 @@ namespace ArtefactSystem
         public Label NewLabel()
         {
             var newLabel = new Label(GetFirstAvailableLabelIndex());
-            
+
             var index = newLabel.index;
             if (LabelExists(index))
             {
@@ -164,16 +175,16 @@ namespace ArtefactSystem
 
             // Add label to list
             Labels.Add(newLabel);
-            
+
             // Add color to shader
             ShaderUpdater.UpdateLabelColor(newLabel);
-            
+
             // Add label to disk
             LabelJsonUtil.Save(Labels);
-            
+
             LabelsChanged?.Invoke(this,
                 new LabelsChangedEventArgs { Type = LabelEvent.Add, Items = new List<Label> { newLabel } });
-            
+
             return newLabel;
         }
     }
