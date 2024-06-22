@@ -7,11 +7,8 @@ namespace Player
     {
         #region UI
 
-        [SerializeField] [Tooltip("Yaw mouse sensitivity")]
-        private float mouseXSens = 1.8f;
-
-        [SerializeField] [Tooltip("Pitch mouse sensitivity")]
-        private float mouseYSens = 1.8f;
+        [SerializeField] private float mouseXSens = 1.8f;
+        [SerializeField] private float mouseYSens = 1.8f;
 
         #endregion
 
