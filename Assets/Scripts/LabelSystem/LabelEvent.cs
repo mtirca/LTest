@@ -1,4 +1,4 @@
-namespace ArtefactSystem
+namespace LabelSystem
 {
     public enum LabelEvent
     {
