@@ -6,9 +6,7 @@ namespace Player
     [RequireComponent(typeof(Camera))]
     public class OrbitingMovement : MonoBehaviour
     {
-        [SerializeField] [Tooltip("Sensitivity of mouse rotation")]
-        private float speed = 1.8f;
-
+        [SerializeField] private float speed = 1.8f;
         [SerializeField] private Artefact artefact;
 
         private void Update()
