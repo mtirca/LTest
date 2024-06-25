@@ -1,11 +1,20 @@
+using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace UI
 {
     public class PixelUI : MonoBehaviour
     {
-        [SerializeField] private Image colorSquare;
-        public Image ColorSquare => colorSquare;
+        [SerializeField] private Image image;
+        [SerializeField] private TMP_Text rgbText;
+        
+        public void SetColor(Color color)
+        {
+            image.color = color;
+            Color32 color32 = color;
+            rgbText.text = $"({color32.r}, {color32.g}, {color32.b})";
+        }
     }
 }

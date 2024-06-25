@@ -1,3 +1,4 @@
+using System;
 using ArtefactSystem;
 using Global;
 using UI;
@@ -17,7 +18,12 @@ namespace Pick.Mode
 
         private void OnDisable()
         {
-            Destroy(_hitPoint);
+            _hitPoint?.SetActive(false);
+        }
+
+        private void OnEnable()
+        {
+            _hitPoint?.SetActive(true);
         }
 
         private void Update()
@@ -50,7 +56,7 @@ namespace Pick.Mode
             pixelUV.y *= artefact.Texture.height;
             Color color = artefact.Texture.GetPixel((int)pixelUV.x, (int)pixelUV.y);
 
-            ui.ColorSquare.color = color;
+            ui.SetColor(color);
 
             // Add new hit point
             Destroy(_hitPoint);
