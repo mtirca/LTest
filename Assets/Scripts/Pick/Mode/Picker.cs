@@ -1,5 +1,6 @@
 using System;
 using Global;
+using UI;
 using UnityEngine;
 
 namespace Pick.Mode
@@ -26,10 +27,11 @@ namespace Pick.Mode
             }
         }
 
-        [SerializeField] private GameObject pixel;
-        [SerializeField] private GameObject pixelUI;
-        [SerializeField] private GameObject brush;
-        [SerializeField] private GameObject brushUI;
+        [SerializeField] private Pixel pixel;
+        [SerializeField] private PixelUI pixelUI;
+        [SerializeField] private Brush brush;
+        [SerializeField] private BrushUI brushUI;
+        [SerializeField] private FreeCursorUI freeCursorUI;
 
         public event EventHandler<OnPickModeChangedEventArgs> OnPickModeChanged;
 
@@ -44,22 +46,25 @@ namespace Pick.Mode
             switch (newValue)
             {
                 case PickMode.None:
-                    brush.SetActive(false);
-                    brushUI.SetActive(false);
-                    pixel.SetActive(false);
-                    pixelUI.SetActive(false);
+                    brush.gameObject.SetActive(false);
+                    brushUI.gameObject.SetActive(false);
+                    pixel.gameObject.SetActive(false);
+                    pixelUI.gameObject.SetActive(false);
+                    freeCursorUI.gameObject.SetActive(true);
                     break;
                 case PickMode.Pixel:
-                    brush.SetActive(false);
-                    brushUI.SetActive(false);
-                    pixel.SetActive(true);
-                    pixelUI.SetActive(true);
+                    brush.gameObject.SetActive(false);
+                    brushUI.gameObject.SetActive(false);
+                    pixel.gameObject.SetActive(true);
+                    pixelUI.gameObject.SetActive(true);
+                    freeCursorUI.gameObject.SetActive(false);
                     break;
                 case PickMode.Brush:
-                    pixel.SetActive(false);
-                    pixelUI.SetActive(false);
-                    brush.SetActive(true);
-                    brushUI.SetActive(true);
+                    pixel.gameObject.SetActive(false);
+                    pixelUI.gameObject.SetActive(false);
+                    brush.gameObject.SetActive(true);
+                    brushUI.gameObject.SetActive(true);
+                    freeCursorUI.gameObject.SetActive(false);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(newValue), newValue, null);

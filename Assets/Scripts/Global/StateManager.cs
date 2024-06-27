@@ -25,7 +25,6 @@ namespace Global
                 _state = value;
                 if (oldState == value) return;
 
-                // ManagePicker(value);
                 OnGlobalStateChanged?.Invoke(this,
                     new OnGlobalStateChangedEventArgs { OldValue = oldState, NewValue = value });
             }
@@ -42,11 +41,6 @@ namespace Global
         private void Start()
         {
             State = State.Cursor;
-        }
-
-        private void ManagePicker(State newValue)
-        {
-            picker.SetActive(newValue == State.Cursor);
         }
 
         private void Update()
