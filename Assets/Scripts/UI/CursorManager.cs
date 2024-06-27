@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace UI
 {
-    public class CursorUI : MonoBehaviour
+    public class CursorManager : MonoBehaviour
     {
         [SerializeField] private StateManager stateManager;
         [SerializeField] private Picker picker;

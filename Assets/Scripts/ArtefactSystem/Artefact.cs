@@ -13,7 +13,12 @@ namespace ArtefactSystem
         private MeshFilter MeshFilter { get; set; }
         public Mesh Mesh => MeshFilter.sharedMesh;
         public MeshCollider MeshCollider { get; private set; }
-        public Texture2D Texture => Renderer.material.mainTexture as Texture2D;
+        public Texture2D Texture
+        {
+            get => Renderer.material.mainTexture as Texture2D;
+            set => Renderer.material.mainTexture = value;
+        }
+
         public List<Label> Labels { get; private set; }
 
         public ShaderLabelUpdater ShaderUpdater { get; private set; }
