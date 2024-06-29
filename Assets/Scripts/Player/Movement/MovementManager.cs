@@ -1,8 +1,7 @@
 using System;
-using Global;
 using UnityEngine;
 
-namespace Player
+namespace Player.Movement
 {
     [RequireComponent(typeof(Camera))]
     public class MovementManager : MonoBehaviour

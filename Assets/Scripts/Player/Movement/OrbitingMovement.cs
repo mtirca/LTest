@@ -1,7 +1,7 @@
 using ArtefactSystem;
 using UnityEngine;
 
-namespace Player
+namespace Player.Movement
 {
     [RequireComponent(typeof(Camera))]
     public class OrbitingMovement : MonoBehaviour

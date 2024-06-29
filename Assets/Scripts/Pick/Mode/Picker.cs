@@ -1,5 +1,5 @@
 using System;
-using Global;
+using Player;
 using UI;
 using UnityEngine;
 
