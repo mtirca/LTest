@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using ArtefactSystem;
 using Player;
 using LabelSystem;
@@ -87,7 +88,7 @@ namespace Pick.Mode
             var cameraPosition = mainCamera.transform.position;
             var triangles = artefact.Mesh.triangles;
             var paintedThisFrame = false;
-
+            var newVertices = new List<int>();
             for (var i = 0; i < vertices.Length; i++)
             {
                 // check it hasn't been painted already
@@ -132,12 +133,15 @@ namespace Pick.Mode
                 }
 
                 #endregion
-
-                _activeLabel.vertices.Add(i);
+                
+                newVertices.Add(i);
                 paintedThisFrame = true;
             }
 
-            if (paintedThisFrame) artefact.ShaderUpdater.AddVertices(_activeLabel);
+            if (!paintedThisFrame) return;
+            
+            _activeLabel.vertices.AddRange(newVertices);
+            artefact.ShaderUpdater.AddVertices(newVertices, _activeLabel.index);
         }
     }
 }
