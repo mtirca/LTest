@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace Global
+namespace Player
 {
     public enum State
     {

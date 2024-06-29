@@ -1,5 +1,5 @@
 using ArtefactSystem;
-using Global;
+using Player;
 using LabelSystem;
 using UnityEngine;
 using UI;

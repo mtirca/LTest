@@ -25,10 +25,10 @@ void CombineLabels_float(
                 const float2 uv = float2((label_index + 0.5) / 32.0, 0.5);
                 const float4 label_color = SAMPLE_TEXTURE2D(_Labels, _Labels.samplerstate, uv);
                 finalAux *= label_color;
-                // if (label_color.a >= 0.5) // Check if the label is visible
-                // {
-                // _FinalColor *= label_color;
-                // }
+                if (label_color.a >= 0.5) // Check if the label is visible
+                {
+                _FinalColor *= label_color;
+                }
             }
         }
     }
