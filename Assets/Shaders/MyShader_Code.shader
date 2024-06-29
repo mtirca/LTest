@@ -64,7 +64,6 @@ Shader "Custom/MyShader_Code"
                         if (label_color.a >= 0.5) // Check if the label is visible
                         {
                             final_color *= label_color;
-                            // final_color = lerp(final_color, label_color, label_color.a);
                         }
                     }
                 }

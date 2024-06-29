@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using ArtefactSystem;
 using UnityEngine;
 
@@ -107,15 +108,19 @@ namespace LabelSystem
             RemoveLabelIndicesFromVerticesColor(label);
         }
 
-        public void AddVertices(Label label)
+        private void AddVertices(Label label)
+        {
+            AddVertices(label.vertices, label.index);
+        }
+        
+        public void AddVertices(List<int> vertices, int lIndex)
         {
             var oldColors = artefact.Mesh.colors32;
             var newColors = artefact.Mesh.colors32;
 
-            label.vertices.ForEach(vIndex =>
+            vertices.ForEach(vIndex =>
             {
                 var vColor = oldColors[vIndex];
-                int lIndex = label.index;
 
                 byte r = vColor.r;
                 byte g = vColor.g;
