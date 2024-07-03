@@ -2,6 +2,7 @@ using System;
 using Player;
 using UI;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Pick.Mode
 {
@@ -27,8 +28,8 @@ namespace Pick.Mode
             }
         }
 
-        [SerializeField] private Pixel pixel;
-        [SerializeField] private PixelUI pixelUI;
+        [SerializeField] private Sampler sampler;
+        [SerializeField] private SamplerUI samplerUI;
         [SerializeField] private Brush brush;
         [SerializeField] private BrushUI brushUI;
         [SerializeField] private FreeCursorUI freeCursorUI;
@@ -48,20 +49,20 @@ namespace Pick.Mode
                 case PickMode.None:
                     brush.gameObject.SetActive(false);
                     brushUI.gameObject.SetActive(false);
-                    pixel.gameObject.SetActive(false);
-                    pixelUI.gameObject.SetActive(false);
+                    sampler.gameObject.SetActive(false);
+                    samplerUI.gameObject.SetActive(false);
                     freeCursorUI.gameObject.SetActive(true);
                     break;
-                case PickMode.Pixel:
+                case PickMode.Sampler:
                     brush.gameObject.SetActive(false);
                     brushUI.gameObject.SetActive(false);
-                    pixel.gameObject.SetActive(true);
-                    pixelUI.gameObject.SetActive(true);
+                    sampler.gameObject.SetActive(true);
+                    samplerUI.gameObject.SetActive(true);
                     freeCursorUI.gameObject.SetActive(false);
                     break;
                 case PickMode.Brush:
-                    pixel.gameObject.SetActive(false);
-                    pixelUI.gameObject.SetActive(false);
+                    sampler.gameObject.SetActive(false);
+                    samplerUI.gameObject.SetActive(false);
                     brush.gameObject.SetActive(true);
                     brushUI.gameObject.SetActive(true);
                     freeCursorUI.gameObject.SetActive(false);
@@ -89,7 +90,7 @@ namespace Pick.Mode
 
             if (Input.GetKeyDown(KeyCode.Alpha2))
             {
-                Value = PickMode.Pixel;
+                Value = PickMode.Sampler;
             }
 
             if (Input.GetKeyDown(KeyCode.Alpha3))

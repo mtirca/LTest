@@ -30,7 +30,7 @@ namespace UI
 
             switch (pickMode)
             {
-                case PickMode.Pixel:
+                case PickMode.Sampler:
                     tex = pixelCursorTex;
                     hotspot = new Vector2(tex.width / 2.0f, tex.height / 2.0f);
                     break;
