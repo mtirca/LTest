@@ -16,7 +16,7 @@ namespace UI
         [SerializeField] private Transform contentHolder;
         [SerializeField] private Artefact artefact;
         [SerializeField] private Brush brush;
-        [SerializeField] private RGBHistogram rgbHistogram;
+        [SerializeField] private HistogramUI histogramUI;
 
         private readonly Dictionary<int, UILabel> _uiLabels = new();
 
@@ -26,11 +26,6 @@ namespace UI
         {
             AddUILabels(artefact.Labels);
             artefact.LabelsChanged += ModifyUILabels;
-        }
-
-        private void Update()
-        {
-            return;
         }
 
         private void AddUILabels(List<Label> labels)
@@ -94,7 +89,7 @@ namespace UI
 
         private void OnGenerateGraphButtonClick(int labelIndex)
         {
-            rgbHistogram.CreateWindow(labelIndex);
+            histogramUI.CreateWindow(labelIndex);
         }
 
         /**

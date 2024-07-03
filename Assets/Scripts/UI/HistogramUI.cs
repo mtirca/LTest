@@ -1,3 +1,5 @@
+using System;
+using System.IO;
 using ArtefactSystem;
 using UnityEngine;
 using UnityEngine.UI;
@@ -6,25 +8,21 @@ using XCharts.Runtime;
 namespace UI
 {
     [RequireComponent(typeof(BrushUI))]
-    public class RGBHistogram : MonoBehaviour
+    public class HistogramUI : MonoBehaviour
     {
         [SerializeField] private Artefact artefact;
         [SerializeField] private GameObject windowPrefab;
 
         private GameObject _window;
         private LineChart _histogram;
-
-        private void Update()
-        {
-            return;
-        }
-
+        private int _labelIndex;
+        
         public void CreateWindow(int labelIndex)
         {
             Destroy(_window);
             _window = Instantiate(windowPrefab, gameObject.transform);
             _histogram = _window.GetComponentInChildren<LineChart>();
-
+            
             var deleteButton = _window.transform.Find("DeleteButton").GetComponent<Button>();
             deleteButton.onClick.AddListener(OnDeleteButtonClick);
 
@@ -36,7 +34,9 @@ namespace UI
 
         private void OnSaveButtonClick()
         {
-            _histogram.SaveAsImage();
+            var fileName = $"hist_{_labelIndex}_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.png";
+            var savePath = Path.Combine(Application.persistentDataPath, fileName);
+            _histogram.SaveAsImage("png", savePath);
         }
 
         private void OnDeleteButtonClick()
