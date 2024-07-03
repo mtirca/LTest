@@ -74,8 +74,7 @@ namespace LabelSystem
             var colorArray = _colorArray;
             foreach (var label in artefact.Labels)
             {
-                var color = colorArray[label.index];
-                colorArray[label.index] = new Color(color.r, color.g, color.b, 0);
+                colorArray[label.index].a = 0;
             }
 
             ColorArray = colorArray;
@@ -91,8 +90,7 @@ namespace LabelSystem
             var colorArray = _colorArray;
             foreach (var label in artefact.Labels)
             {
-                var color = colorArray[label.index];
-                colorArray[label.index] = new Color(color.r, color.g, color.b, label.color.a);
+                colorArray[label.index].a = label.color.a;
             }
 
             ColorArray = colorArray;
@@ -105,7 +103,7 @@ namespace LabelSystem
             colorArray[label.index] = new Color(0, 0, 0, 0);
             ColorArray = colorArray;
 
-            RemoveLabelIndicesFromVerticesColor(label);
+            RemoveVertices(label);
         }
 
         private void AddVertices(Label label)
@@ -138,15 +136,19 @@ namespace LabelSystem
             artefact.Mesh.colors32 = newColors;
         }
 
-        private void RemoveLabelIndicesFromVerticesColor(Label label)
+        private void RemoveVertices(Label label)
+        {
+            RemoveVertices(label.vertices, label.index);
+        }
+        
+        private void RemoveVertices(List<int> vertices, int lIndex)
         {
             var oldColors = artefact.Mesh.colors32;
             var newColors = artefact.Mesh.colors32;
 
-            label.vertices.ForEach(vIndex =>
+            vertices.ForEach(vIndex =>
             {
                 var vColor = oldColors[vIndex];
-                int lIndex = label.index;
 
                 byte r = vColor.r;
                 byte g = vColor.g;

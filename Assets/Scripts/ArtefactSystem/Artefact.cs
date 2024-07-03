@@ -13,6 +13,7 @@ namespace ArtefactSystem
         private MeshFilter MeshFilter { get; set; }
         public Mesh Mesh => MeshFilter.sharedMesh;
         public MeshCollider MeshCollider { get; private set; }
+
         public Texture2D Texture
         {
             get => Renderer.material.mainTexture as Texture2D;
@@ -116,7 +117,7 @@ namespace ArtefactSystem
 
         private void InitLabels()
         {
-            var labels = LabelJsonUtil.Load().ToList();
+            var labels = LabelJsonPersister.Load().ToList();
             Labels = new List<Label>(labels);
 
             LabelsChanged?.Invoke(this, new LabelsChangedEventArgs { Type = LabelEvent.Add, Items = labels });
@@ -131,7 +132,7 @@ namespace ArtefactSystem
             ShaderUpdater.RemoveShaderLabel(label);
 
             // Remove label from disk
-            LabelJsonUtil.Save(Labels);
+            LabelJsonPersister.Save(Labels);
 
             LabelsChanged?.Invoke(this,
                 new LabelsChangedEventArgs { Type = LabelEvent.Remove, Items = new List<Label> { label } });
@@ -153,7 +154,7 @@ namespace ArtefactSystem
 
             ShaderUpdater.UpdateLabelColor(Labels[listIndex]);
 
-            LabelJsonUtil.Save(Labels);
+            LabelJsonPersister.Save(Labels);
 
             LabelsChanged?.Invoke(this,
                 new LabelsChangedEventArgs { Type = LabelEvent.Update, Items = new List<Label> { Labels[listIndex] } });
@@ -178,7 +179,7 @@ namespace ArtefactSystem
             ShaderUpdater.UpdateLabelColor(newLabel);
 
             // Add label to disk
-            LabelJsonUtil.Save(Labels);
+            LabelJsonPersister.Save(Labels);
 
             LabelsChanged?.Invoke(this,
                 new LabelsChangedEventArgs { Type = LabelEvent.Add, Items = new List<Label> { newLabel } });
