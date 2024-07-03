@@ -1,11 +1,10 @@
 using TMPro;
 using UnityEngine;
-using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace UI
 {
-    public class PixelUI : MonoBehaviour
+    public class SamplerUI : MonoBehaviour
     {
         [SerializeField] private Image image;
         [SerializeField] private TMP_Text rgbText;

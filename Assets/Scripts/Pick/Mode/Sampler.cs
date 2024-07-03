@@ -5,10 +5,10 @@ using UnityEngine;
 
 namespace Pick.Mode
 {
-    public class Pixel : MonoBehaviour
+    public class Sampler : MonoBehaviour
     {
         [SerializeField] private Camera mainCamera;
-        [SerializeField] private PixelUI ui;
+        [SerializeField] private SamplerUI ui;
         [SerializeField] private GameObject hitPointPrefab;
         [SerializeField] private StateManager stateManager;
 
