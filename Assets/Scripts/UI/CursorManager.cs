@@ -1,19 +1,18 @@
-using Player;
 using Pick.Mode;
+using Player.Movement;
 using UnityEngine;
 
 namespace UI
 {
     public class CursorManager : MonoBehaviour
     {
-        [SerializeField] private StateManager stateManager;
+        [SerializeField] private MovementManager movementManager;
         [SerializeField] private Picker picker;
         [SerializeField] private Texture2D pixelCursorTex;
         [SerializeField] private Texture2D brushCursorTex;
 
         private void Awake()
         {
-            stateManager.OnGlobalStateChanged += ChangeCursorVisibility;
             picker.OnPickModeChanged += ChangeCursorTexture;
             Cursor.lockState = CursorLockMode.Confined;
         }
@@ -38,7 +37,7 @@ namespace UI
                     tex = brushCursorTex;
                     hotspot = new Vector2(tex.width / 2.0f, tex.height / 2.0f);
                     break;
-                case PickMode.None:
+                case PickMode.Cursor:
                 default:
                     tex = null;
                     hotspot = Vector2.zero;
@@ -47,10 +46,10 @@ namespace UI
 
             Cursor.SetCursor(tex, hotspot, CursorMode.Auto);
         }
-
-        private static void ChangeCursorVisibility(object sender, StateManager.OnGlobalStateChangedEventArgs e)
+        
+        public static void ChangeCursorVisibility(Movement newMovement)
         {
-            Cursor.visible = e.NewValue == State.Cursor;
+            Cursor.visible = newMovement == Movement.None;
         }
     }
 }

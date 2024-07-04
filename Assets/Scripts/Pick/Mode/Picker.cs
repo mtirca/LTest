@@ -1,16 +1,15 @@
 using System;
-using Player;
+using Player.Movement;
 using UI;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace Pick.Mode
 {
     public class Picker : MonoBehaviour
     {
-        [SerializeField] private StateManager stateManager;
+        [SerializeField] private MovementManager movementManager;
 
-        private PickMode _value = PickMode.None;
+        private PickMode _value = PickMode.Cursor;
 
         public PickMode Value
         {
@@ -46,7 +45,7 @@ namespace Pick.Mode
         {
             switch (newValue)
             {
-                case PickMode.None:
+                case PickMode.Cursor:
                     brush.gameObject.SetActive(false);
                     brushUI.gameObject.SetActive(false);
                     sampler.gameObject.SetActive(false);
@@ -82,10 +81,11 @@ namespace Pick.Mode
          */
         private void ChangePickMode()
         {
-            if (stateManager.State != State.Cursor) return;
+            if (movementManager.Movement != Movement.None) return;
+            
             if (Input.GetKeyDown(KeyCode.Alpha1))
             {
-                Value = PickMode.None;
+                Value = PickMode.Cursor;
             }
 
             if (Input.GetKeyDown(KeyCode.Alpha2))

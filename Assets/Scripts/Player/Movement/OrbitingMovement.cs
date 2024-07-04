@@ -13,10 +13,10 @@ namespace Player.Movement
         {
             if (!Input.GetMouseButton(0)) return;
 
-            var pos = artefact.GetComponent<Renderer>().bounds.center;
+            var center = artefact.GetComponent<Renderer>().bounds.center;
 
-            transform.RotateAround(pos, transform.right, -Input.GetAxis("Mouse Y") * speed);
-            transform.RotateAround(pos, transform.up, Input.GetAxis("Mouse X") * speed);
+            transform.RotateAround(center, transform.right, -Input.GetAxis("Mouse Y") * speed);
+            transform.RotateAround(center, transform.up, Input.GetAxis("Mouse X") * speed);
         }
     }
 }

@@ -123,51 +123,6 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &58393047
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 58393049}
-  - component: {fileID: 58393048}
-  m_Layer: 0
-  m_Name: StateManager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &58393048
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 58393047}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 31a9b027e013426a9f2ac00dcd4ef547, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  picker: {fileID: 936485325}
---- !u!4 &58393049
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 58393047}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 451, y: 194.2, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &77776927
 GameObject:
   m_ObjectHideFlags: 0
@@ -923,7 +878,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   artefact: {fileID: 616170884}
-  defaultTex: {fileID: 2800000, guid: 49fca1a5da05e1d4ea76804e37d94c34, type: 3}
+  defaultTex: {fileID: 2800000, guid: 921bc12d2369bb942b2575efef9ad80f, type: 3}
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
@@ -1047,9 +1002,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dc713cea1e57443cb4a774345559d0c9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  stateManager: {fileID: 58393048}
-  pixel: {fileID: 1085531924}
-  pixelUI: {fileID: 1999945510}
+  movementManager: {fileID: 963194231}
+  sampler: {fileID: 1085531924}
+  samplerUI: {fileID: 1999945510}
   brush: {fileID: 1020749356}
   brushUI: {fileID: 2002373877}
   freeCursorUI: {fileID: 355089274}
@@ -1479,8 +1434,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 436275a13d4459746955fc6db5953473, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  movementSpeed: 0.01
-  boostedSpeed: 0.05
+  movementSpeed: 3
   rotationSens: 100
 --- !u!114 &963194231
 MonoBehaviour:
@@ -1494,7 +1448,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e2333f38c34e4346a96458c450ed86d1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  stateManager: {fileID: 58393048}
+  onGlobalStateChanged:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1700234299}
+        m_TargetAssemblyTypeName: UI.CursorManager, Assembly-CSharp
+        m_MethodName: ChangeCursorVisibility
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &963194232
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1502,7 +1470,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 963194225}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 16643835c9e5435abfaaeeaf02446f11, type: 3}
   m_Name: 
@@ -1532,7 +1500,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 963194225}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 58bbbc24f8a346929b4d3d294062b1a9, type: 3}
   m_Name: 
@@ -1618,7 +1586,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mainCamera: {fileID: 963194227}
   ui: {fileID: 2002373877}
-  stateManager: {fileID: 58393048}
+  movementManager: {fileID: 963194231}
   artefact: {fileID: 616170884}
   brushRadius: 15
 --- !u!4 &1020749357
@@ -1837,7 +1805,7 @@ GameObject:
   - component: {fileID: 1085531923}
   - component: {fileID: 1085531924}
   m_Layer: 0
-  m_Name: Pixel
+  m_Name: Sampler
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1873,7 +1841,7 @@ MonoBehaviour:
   mainCamera: {fileID: 963194227}
   ui: {fileID: 1999945510}
   hitPointPrefab: {fileID: 1959113024694188513, guid: 2b3f10b06219f6c4fbee0b5ad8b8a928, type: 3}
-  stateManager: {fileID: 58393048}
+  movementManager: {fileID: 963194231}
 --- !u!1 &1237478014
 GameObject:
   m_ObjectHideFlags: 0
@@ -3700,7 +3668,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4a0a203803164202b331f0a4c463ef28, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  stateManager: {fileID: 58393048}
+  movementManager: {fileID: 963194231}
   picker: {fileID: 936485326}
   pixelCursorTex: {fileID: 2800000, guid: aa004121e25199f46a619a27d07debda, type: 3}
   brushCursorTex: {fileID: 2800000, guid: 3db8c0be10bb45a4c8942e9e922236d3, type: 3}
@@ -3917,7 +3885,7 @@ GameObject:
   - component: {fileID: 1999945509}
   - component: {fileID: 1999945510}
   m_Layer: 5
-  m_Name: PixelUI
+  m_Name: SamplerUI
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4028,7 +3996,7 @@ MonoBehaviour:
   contentHolder: {fileID: 2021835439}
   artefact: {fileID: 616170884}
   brush: {fileID: 1020749356}
-  rgbHistogram: {fileID: 2002373878}
+  histogramUI: {fileID: 2002373878}
 --- !u!114 &2002373878
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4732,4 +4700,3 @@ SceneRoots:
   - {fileID: 616170888}
   - {fileID: 237229382}
   - {fileID: 936485327}
-  - {fileID: 58393049}
