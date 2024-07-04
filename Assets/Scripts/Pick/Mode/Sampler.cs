@@ -1,5 +1,5 @@
 using ArtefactSystem;
-using Player;
+using Player.Movement;
 using UI;
 using UnityEngine;
 
@@ -10,24 +10,24 @@ namespace Pick.Mode
         [SerializeField] private Camera mainCamera;
         [SerializeField] private SamplerUI ui;
         [SerializeField] private GameObject hitPointPrefab;
-        [SerializeField] private StateManager stateManager;
+        [SerializeField] private MovementManager movementManager;
 
         private GameObject _hitPoint;
         private Vector3 _cursorPos;
 
         private void OnDisable()
         {
-            _hitPoint?.SetActive(false);
+            if (_hitPoint) _hitPoint.SetActive(false);
         }
 
         private void OnEnable()
         {
-            _hitPoint?.SetActive(true);
+            if (_hitPoint) _hitPoint.SetActive(true);
         }
 
         private void Update()
         {
-            if (!Input.GetMouseButtonDown(0) || stateManager.State != State.Cursor) return;
+            if (!Input.GetMouseButtonDown(0) || movementManager.Movement != Movement.None) return;
 
             _cursorPos = Input.mousePosition;
 

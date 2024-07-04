@@ -2,7 +2,7 @@ namespace Pick.Mode
 {
     public enum PickMode
     {
-        None,
+        Cursor,
         Sampler,
         Brush
     }

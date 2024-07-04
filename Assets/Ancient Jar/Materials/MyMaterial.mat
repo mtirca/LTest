@@ -20,8 +20,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: MyMaterial_Code
-  m_Shader: {fileID: 4800000, guid: 4f170dc3be153494ba6de90b7f6f7ee5, type: 3}
+  m_Name: MyMaterial
+  m_Shader: {fileID: -6465566751694194690, guid: f399e2abec0f8ae419dd251d9c0cb6b2, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -41,7 +41,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: 49fca1a5da05e1d4ea76804e37d94c34, type: 3}
+        m_Texture: {fileID: 2800000, guid: 921bc12d2369bb942b2575efef9ad80f, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Texture2DAsset_37af6b10360e4e888660239196e1a2d1_Out_0_Texture2D:
@@ -52,8 +52,5 @@ Material:
     m_Floats:
     - _BUILTIN_QueueControl: 0
     - _BUILTIN_QueueOffset: 0
-    - _Glossiness: 0.5
-    - _Metallic: 0
-    m_Colors:
-    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    m_Colors: []
   m_BuildTextureStacks: []

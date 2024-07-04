@@ -5,17 +5,12 @@ namespace Player.Movement
     [RequireComponent(typeof(Camera))]
     public class KeyMovement : MonoBehaviour
     {
-        [SerializeField] private float movementSpeed = .01f;
-        [SerializeField] private float boostedSpeed = .05f;
-        [SerializeField] private float rotationSens = 100.0f;
+        [SerializeField] private float movementSpeed = 3.0f;
 
         private void Update()
         {
             Vector3 deltaPos = Vector3.zero;
             float currSpeed = movementSpeed;
-
-            if (Input.GetKey(KeyCode.LeftShift))
-                currSpeed = boostedSpeed;
 
             if (Input.GetKey(KeyCode.W))
                 deltaPos += transform.forward;
@@ -35,13 +30,7 @@ namespace Player.Movement
             if (Input.GetKey(KeyCode.LeftControl))
                 deltaPos -= transform.up;
 
-            transform.position += deltaPos * currSpeed;
-
-            if (Input.GetKey(KeyCode.E))
-                transform.Rotate(0.0f, 0.0f, -Time.deltaTime * rotationSens);
-            
-            if (Input.GetKey(KeyCode.Q))
-                transform.Rotate(0.0f, 0.0f, +Time.deltaTime * rotationSens);
+            transform.position += deltaPos * (Time.deltaTime * currSpeed);
         }
     }
 }

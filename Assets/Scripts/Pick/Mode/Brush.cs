@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using ArtefactSystem;
-using Player;
 using LabelSystem;
+using Player.Movement;
 using UnityEngine;
 using UI;
 
@@ -11,7 +11,7 @@ namespace Pick.Mode
     {
         [SerializeField] private Camera mainCamera;
         [SerializeField] private BrushUI ui;
-        [SerializeField] private StateManager stateManager;
+        [SerializeField] private MovementManager movementManager;
         [SerializeField] private Artefact artefact;
         // in screen space
         [SerializeField] private double brushRadius = 15;
@@ -28,13 +28,11 @@ namespace Pick.Mode
         private void OnDisable()
         {
             if (_quitting) return;
-            // artefact.HideAllLabels();
             artefact.ShaderUpdater.HideLabels();
         }
 
         private void OnEnable()
         {
-            // artefact.ShowAllLabels();
             artefact.ShaderUpdater.ShowLabels();
         }
 
@@ -79,7 +77,7 @@ namespace Pick.Mode
 
         private void Update()
         {
-            if (_activeLabel == null || !Input.GetMouseButton(0) || stateManager.State != State.Cursor) return;
+            if (_activeLabel == null || !Input.GetMouseButton(0) || movementManager.Movement != Movement.None) return;
 
             _cursorPos = Input.mousePosition;
 
