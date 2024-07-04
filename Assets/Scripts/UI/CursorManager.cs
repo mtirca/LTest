@@ -13,13 +13,12 @@ namespace UI
 
         private void Awake()
         {
-            picker.OnPickModeChanged += ChangeCursorTexture;
             Cursor.lockState = CursorLockMode.Confined;
         }
 
-        private void ChangeCursorTexture(object sender, Picker.OnPickModeChangedEventArgs e)
+        public void ChangeCursorTexture(PickMode _, PickMode newValue)
         {
-            SetCursorTexture(e.NewValue);
+            SetCursorTexture(newValue);
         }
 
         private void SetCursorTexture(PickMode pickMode)

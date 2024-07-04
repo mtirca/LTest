@@ -2,6 +2,7 @@ using System;
 using Player.Movement;
 using UI;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace Pick.Mode
 {
@@ -22,8 +23,7 @@ namespace Pick.Mode
                 _value = value;
 
                 ActivatePickModeScripts(_value);
-                OnPickModeChanged?.Invoke(this,
-                    new OnPickModeChangedEventArgs { OldValue = oldValue, NewValue = _value });
+                onPickModeChanged?.Invoke(oldValue, _value);
             }
         }
 
@@ -33,13 +33,7 @@ namespace Pick.Mode
         [SerializeField] private BrushUI brushUI;
         [SerializeField] private FreeCursorUI freeCursorUI;
 
-        public event EventHandler<OnPickModeChangedEventArgs> OnPickModeChanged;
-
-        public class OnPickModeChangedEventArgs
-        {
-            public PickMode OldValue;
-            public PickMode NewValue;
-        }
+        public UnityEvent<PickMode, PickMode> onPickModeChanged;
 
         private void ActivatePickModeScripts(PickMode newValue)
         {

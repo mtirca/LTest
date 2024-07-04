@@ -765,6 +765,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 70366bfc54734d76ba3c8dff40920b76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  labelsChanged:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 2002373877}
+        m_TargetAssemblyTypeName: UI.BrushUI, Assembly-CSharp
+        m_MethodName: ModifyUILabels
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!64 &616170885
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -1008,6 +1023,21 @@ MonoBehaviour:
   brush: {fileID: 1020749356}
   brushUI: {fileID: 2002373877}
   freeCursorUI: {fileID: 355089274}
+  onPickModeChanged:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1700234299}
+        m_TargetAssemblyTypeName: UI.CursorManager, Assembly-CSharp
+        m_MethodName: ChangeCursorTexture
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!4 &936485327
 Transform:
   m_ObjectHideFlags: 0
@@ -1349,6 +1379,7 @@ GameObject:
   - component: {fileID: 963194232}
   - component: {fileID: 963194235}
   - component: {fileID: 963194233}
+  - component: {fileID: 963194236}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -1435,7 +1466,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   movementSpeed: 3
-  rotationSens: 100
 --- !u!114 &963194231
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1507,6 +1537,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mouseXSens: 1.8
   mouseYSens: 1.8
+--- !u!114 &963194236
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 963194225}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 72ecc926a4f243fc8207687f14ccdbb5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  rotationSens: 100
 --- !u!1 &993162555
 GameObject:
   m_ObjectHideFlags: 0
