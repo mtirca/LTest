@@ -4,6 +4,7 @@ using System.Linq;
 using LabelSystem;
 using LabelSystem.Utils;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace ArtefactSystem
 {
@@ -24,13 +25,7 @@ namespace ArtefactSystem
 
         public ShaderLabelUpdater ShaderUpdater { get; private set; }
 
-        public event EventHandler<LabelsChangedEventArgs> LabelsChanged;
-
-        public class LabelsChangedEventArgs
-        {
-            public LabelEvent Type;
-            public List<Label> Items;
-        }
+        public UnityEvent<LabelEvent, List<Label>> labelsChanged;
 
         private void Awake()
         {
@@ -67,8 +62,7 @@ namespace ArtefactSystem
         {
             var label = FindLabel(labelIndex);
             label.color.a = 0;
-            LabelsChanged?.Invoke(this,
-                new LabelsChangedEventArgs { Type = LabelEvent.VisibleUpdate, Items = new List<Label> { label } });
+            labelsChanged?.Invoke(LabelEvent.VisibleUpdate, new List<Label> { label });
             ShaderUpdater.UpdateLabelColor(label);
         }
 
@@ -76,14 +70,8 @@ namespace ArtefactSystem
         {
             var label = FindLabel(labelIndex);
             label.color.a = 1;
-            LabelsChanged?.Invoke(this,
-                new LabelsChangedEventArgs { Type = LabelEvent.VisibleUpdate, Items = new List<Label> { label } });
+            labelsChanged?.Invoke(LabelEvent.VisibleUpdate, new List<Label> { label });
             ShaderUpdater.UpdateLabelColor(label);
-        }
-
-        private void Update()
-        {
-            return;
         }
 
         public int GetFirstAvailableLabelIndex()
@@ -119,8 +107,7 @@ namespace ArtefactSystem
         {
             var labels = LabelJsonPersister.Load().ToList();
             Labels = new List<Label>(labels);
-
-            LabelsChanged?.Invoke(this, new LabelsChangedEventArgs { Type = LabelEvent.Add, Items = labels });
+            labelsChanged?.Invoke(LabelEvent.Add, labels);
         }
 
         public void RemoveLabel(Label label)
@@ -133,9 +120,7 @@ namespace ArtefactSystem
 
             // Remove label from disk
             LabelJsonPersister.Save(Labels);
-
-            LabelsChanged?.Invoke(this,
-                new LabelsChangedEventArgs { Type = LabelEvent.Remove, Items = new List<Label> { label } });
+            labelsChanged?.Invoke(LabelEvent.Remove, new List<Label> { label });
         }
 
         public void UpdateLabel(int labelIndex, string newName, string newDescription, Color newColor)
@@ -155,9 +140,8 @@ namespace ArtefactSystem
             ShaderUpdater.UpdateLabelColor(Labels[listIndex]);
 
             LabelJsonPersister.Save(Labels);
-
-            LabelsChanged?.Invoke(this,
-                new LabelsChangedEventArgs { Type = LabelEvent.Update, Items = new List<Label> { Labels[listIndex] } });
+            
+            labelsChanged?.Invoke(LabelEvent.Update, new List<Label> { Labels[listIndex] });
         }
 
         public Label NewLabel()
@@ -180,10 +164,9 @@ namespace ArtefactSystem
 
             // Add label to disk
             LabelJsonPersister.Save(Labels);
-
-            LabelsChanged?.Invoke(this,
-                new LabelsChangedEventArgs { Type = LabelEvent.Add, Items = new List<Label> { newLabel } });
-
+            
+            labelsChanged?.Invoke(LabelEvent.Add, new List<Label> {newLabel});
+            
             return newLabel;
         }
     }

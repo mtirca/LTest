@@ -25,7 +25,7 @@ namespace UI
         private void Start()
         {
             AddUILabels(artefact.Labels);
-            artefact.LabelsChanged += ModifyUILabels;
+            // artefact.LabelsChanged += ModifyUILabels;
         }
 
         private void AddUILabels(List<Label> labels)
@@ -213,24 +213,24 @@ namespace UI
             brush.NewLabel();
         }
 
-        private void ModifyUILabels(object sender, Artefact.LabelsChangedEventArgs args)
+        public void ModifyUILabels(LabelEvent labelEvent, List<Label> labels)
         {
-            switch (args.Type)
+            switch (labelEvent)
             {
                 case LabelEvent.Add:
-                    AddUILabels(args.Items);
+                    AddUILabels(labels);
                     break;
                 case LabelEvent.Remove:
-                    RemoveUILabels(args.Items);
+                    RemoveUILabels(labels);
                     break;
                 case LabelEvent.VisibleUpdate:
-                    UpdateVisibleToggleUI(args.Items);
+                    UpdateVisibleToggleUI(labels);
                     break;
                 case LabelEvent.Update:
-                    UpdateUILabels(args.Items);
+                    UpdateUILabels(labels);
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(args.Type));
+                    throw new ArgumentOutOfRangeException(nameof(labelEvent));
             }
         }
     }
