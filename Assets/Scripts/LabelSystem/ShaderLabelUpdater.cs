@@ -10,17 +10,6 @@ namespace LabelSystem
         [SerializeField] private Artefact artefact;
 
         private Color[] _colorArray;
-
-        public Color[] ColorArray
-        {
-            get => _colorArray;
-            set
-            {
-                _colorArray = value;
-                artefact.Renderer.material.SetColorArray(_colorArrayId, value);
-            }
-        }
-
         private int _labelColorsId;
         private int _colorArrayId;
 
@@ -33,12 +22,7 @@ namespace LabelSystem
         {
             InitColorArray();
         }
-
-        private void Update()
-        {
-            return;
-        }
-
+        
         private void InitColorArray()
         {
             var colorArray = new Color[32];
@@ -49,7 +33,8 @@ namespace LabelSystem
                 colorArray[i] = color;
             }
 
-            ColorArray = colorArray;
+            _colorArray = colorArray;
+            artefact.Renderer.material.SetColorArray(_colorArrayId, _colorArray);
 
             // add label indices to vertex color
             artefact.Labels.ForEach(AddVertices);
@@ -60,9 +45,8 @@ namespace LabelSystem
          */
         public void UpdateLabelColor(Label label)
         {
-            var colorArray = _colorArray;
-            colorArray[label.index] = label.color;
-            ColorArray = colorArray;
+            _colorArray[label.index] = label.color;
+            artefact.Renderer.material.SetColorArray(_colorArrayId, _colorArray);
         }
 
         /**
@@ -71,13 +55,12 @@ namespace LabelSystem
          */
         public void HideLabels()
         {
-            var colorArray = _colorArray;
             foreach (var label in artefact.Labels)
             {
-                colorArray[label.index].a = 0;
+                _colorArray[label.index].a = 0;
             }
 
-            ColorArray = colorArray;
+            artefact.Renderer.material.SetColorArray(_colorArrayId, _colorArray);
         }
 
         /**
@@ -87,22 +70,19 @@ namespace LabelSystem
          */
         public void ShowLabels()
         {
-            var colorArray = _colorArray;
             foreach (var label in artefact.Labels)
             {
-                colorArray[label.index].a = label.color.a;
+                _colorArray[label.index].a = label.color.a;
             }
 
-            ColorArray = colorArray;
+            artefact.Renderer.material.SetColorArray(_colorArrayId, _colorArray);
         }
         
         public void RemoveShaderLabel(Label label)
         {
-            // Remove labels from shader
-            var colorArray = _colorArray;
-            colorArray[label.index] = new Color(0, 0, 0, 0);
-            ColorArray = colorArray;
-
+            _colorArray[label.index] = new Color(0, 0, 0, 0);
+            artefact.Renderer.material.SetColorArray(_colorArrayId, _colorArray);
+            
             RemoveVertices(label);
         }
 
@@ -141,7 +121,7 @@ namespace LabelSystem
             RemoveVertices(label.vertices, label.index);
         }
         
-        private void RemoveVertices(List<int> vertices, int lIndex)
+        public void RemoveVertices(List<int> vertices, int lIndex)
         {
             var oldColors = artefact.Mesh.colors32;
             var newColors = artefact.Mesh.colors32;

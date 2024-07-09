@@ -6,12 +6,14 @@ namespace Player.Movement
     public class KeyMovement : MonoBehaviour
     {
         [SerializeField] private float movementSpeed = 3.0f;
+        [SerializeField] private float boostSpeed = 10.0f;
 
         private void Update()
         {
             Vector3 deltaPos = Vector3.zero;
-            float currSpeed = movementSpeed;
 
+            var currSpeed = Input.GetKey(KeyCode.LeftShift) ? boostSpeed : movementSpeed;
+                
             if (Input.GetKey(KeyCode.W))
                 deltaPos += transform.forward;
 

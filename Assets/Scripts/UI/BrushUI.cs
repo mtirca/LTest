@@ -17,7 +17,9 @@ namespace UI
         [SerializeField] private Artefact artefact;
         [SerializeField] private Brush brush;
         [SerializeField] private HistogramUI histogramUI;
-
+        [SerializeField] private Toggle brushToggle;
+        [SerializeField] private Toggle eraserToggle;
+        
         private readonly Dictionary<int, UILabel> _uiLabels = new();
 
         private UILabel _activeLabel;
@@ -25,7 +27,6 @@ namespace UI
         private void Start()
         {
             AddUILabels(artefact.Labels);
-            // artefact.LabelsChanged += ModifyUILabels;
         }
 
         private void AddUILabels(List<Label> labels)
@@ -38,6 +39,16 @@ namespace UI
             return new Color(color.r, color.g, color.b, 1);
         }
 
+        public void OnPaintToggled()
+        {
+            brush.ActivatePaint();
+        }
+
+        public void OnEraserToggled()
+        {
+            brush.ActivateEraser();
+        }
+        
         private void AddUILabel(Label label)
         {
             var uiLabel = new UILabel(labelPrefab, contentHolder)
