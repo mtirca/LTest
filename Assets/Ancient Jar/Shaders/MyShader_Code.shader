@@ -52,13 +52,9 @@ Shader "Custom/MyShader_Code"
                 for (int bit = 0; bit < 8; bit++)
                 {
                     const int label_index = channel * 8 + bit;
-                    const int mask = 1 << bit;
                     const float f = vColor[channel];
                     const int color32 = f >= 1.0 ? 255 : f <= 0.0 ? 0 : (int)floor(f * 256.0);
-                    const int result = mask & color32;
-                    const bool is_label_set = result != 0;
-
-                    if (is_label_set)
+                    if (1 << bit & color32)
                     {
                         const float4 label_color = _ColorArray[label_index];
                         if (label_color.a >= 0.5) // Check if the label is visible

@@ -37,10 +37,10 @@ namespace UI
 
         private void OnApplyButtonClick()
         {
+            ResetValidationColors();
             try
             {
                 artefactTexture.SetTexture(redField.text, greenField.text, blueField.text);
-                ResetValidationColors();
             }
             catch (InvalidChannelExpressionException e)
             {

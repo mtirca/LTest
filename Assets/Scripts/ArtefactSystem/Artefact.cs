@@ -106,8 +106,8 @@ namespace ArtefactSystem
         private void InitLabels()
         {
             var labels = LabelJsonPersister.Load().ToList();
+            labels.ForEach(label => label.color.a = 0);
             Labels = new List<Label>(labels);
-            labelsChanged?.Invoke(LabelEvent.Add, labels);
         }
 
         public void RemoveLabel(Label label)

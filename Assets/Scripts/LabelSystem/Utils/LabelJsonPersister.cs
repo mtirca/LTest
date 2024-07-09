@@ -20,20 +20,20 @@ namespace LabelSystem.Utils
 
         public static IEnumerable<Label> Load()
         {
+            Labels serializableData;
             try
             {
                 var jsonData = File.ReadAllText(JsonPath);
-                var serializableData = JsonUtility.FromJson<Labels>(jsonData);
-                serializableData.labels.ForEach(label => label.color.a = 0);
-                return serializableData.labels.AsEnumerable();
+                serializableData = JsonUtility.FromJson<Labels>(jsonData);
             }
             catch (FileNotFoundException)
             {
                 Debug.Log($"{JsonFileName} not found, creating file containing empty list...");
-                var serializableData = new Labels(Enumerable.Empty<Label>());
+                serializableData = new Labels(Enumerable.Empty<Label>());
                 File.WriteAllText(JsonPath, JsonUtility.ToJson(serializableData, true));
-                return serializableData.labels.AsEnumerable();
             }
+
+            return serializableData.labels.AsEnumerable();
         }
     }
 }
