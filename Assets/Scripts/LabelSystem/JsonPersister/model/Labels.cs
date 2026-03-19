@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace LabelSystem
+namespace LabelSystem.JsonPersister.model
 {
     [Serializable]
     public class Labels

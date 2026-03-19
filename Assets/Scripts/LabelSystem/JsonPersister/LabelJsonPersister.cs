@@ -1,9 +1,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using LabelSystem.JsonPersister.model;
 using UnityEngine;
 
-namespace LabelSystem.Utils
+namespace LabelSystem.JsonPersister
 {
     public static class LabelJsonPersister
     {

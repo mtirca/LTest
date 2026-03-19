@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using LabelSystem;
-using LabelSystem.Utils;
+using LabelSystem.JsonPersister;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -58,18 +58,24 @@ namespace ArtefactSystem
             return Labels.Find(l => l.index == labelIndex);
         }
 
+        /**
+         * Hide by updating label in state, UI and shader
+         */
         public void HideLabel(int labelIndex)
         {
             var label = FindLabel(labelIndex);
-            label.color.a = 0;
+            label.Hide();
             labelsChanged?.Invoke(LabelEvent.VisibleUpdate, new List<Label> { label });
             ShaderUpdater.UpdateLabelColor(label);
         }
 
+        /**
+         * Show by updating label in state, UI and shader
+         */
         public void ShowLabel(int labelIndex)
         {
             var label = FindLabel(labelIndex);
-            label.color.a = 1;
+            label.Show();
             labelsChanged?.Invoke(LabelEvent.VisibleUpdate, new List<Label> { label });
             ShaderUpdater.UpdateLabelColor(label);
         }
