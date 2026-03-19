@@ -14,7 +14,7 @@ namespace ArtefactSystem
 
         private void Awake()
         {
-            artefact.Texture = CloneTexture2D(defaultTex);
+            ResetTexture();
         }
 
         private void ResetTexture()
