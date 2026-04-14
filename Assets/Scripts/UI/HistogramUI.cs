@@ -48,25 +48,25 @@ namespace UI
 
         private void PopulateHistogram(int labelIndex)
         {
-            var colors = artefact.GetLabelVerticesColors(labelIndex);
-
-            var rData = new int[256];
-            var gData = new int[256];
-            var bData = new int[256];
-
-            foreach (var color in colors)
-            {
-                rData[color.r]++;
-                gData[color.g]++;
-                bData[color.b]++;
-            }
-
-            for (int i = 0; i < 256; i++)
-            {
-                _histogram.AddData("Red", i, rData[i]);
-                _histogram.AddData("Green", i, gData[i]);
-                _histogram.AddData("Blue", i, bData[i]);
-            }
+            // var colors = artefact.GetLabelVerticesColors(labelIndex);
+            //
+            // var rData = new int[256];
+            // var gData = new int[256];
+            // var bData = new int[256];
+            //
+            // foreach (var color in colors)
+            // {
+            //     rData[color.r]++;
+            //     gData[color.g]++;
+            //     bData[color.b]++;
+            // }
+            //
+            // for (int i = 0; i < 256; i++)
+            // {
+            //     _histogram.AddData("Red", i, rData[i]);
+            //     _histogram.AddData("Green", i, gData[i]);
+            //     _histogram.AddData("Blue", i, bData[i]);
+            // }
         }
     }
 }

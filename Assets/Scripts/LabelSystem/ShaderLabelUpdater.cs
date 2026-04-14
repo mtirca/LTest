@@ -29,7 +29,7 @@ namespace LabelSystem
             var black = new Color(0, 0, 0, 0);
             for (var i = 0; i < Label.Max; i++)
             {
-                var color = artefact.Labels.Find(label => label.index == i)?.color ?? black;
+                var color = artefact.Labels.Find(label => label.id == i)?.color ?? black;
                 colorArray[i] = color;
             }
 
@@ -45,7 +45,7 @@ namespace LabelSystem
          */
         public void UpdateLabelColor(Label label)
         {
-            _colorArray[label.index] = label.color;
+            _colorArray[label.id] = label.color;
             artefact.Renderer.material.SetColorArray(_colorArrayId, _colorArray);
         }
 
@@ -55,9 +55,13 @@ namespace LabelSystem
          */
         public void HideLabels()
         {
+            if (_colorArray == null)
+            {
+                return;
+            }
             foreach (var label in artefact.Labels)
             {
-                _colorArray[label.index].a = 0;
+                _colorArray[label.id].a = 0;
             }
 
             artefact.Renderer.material.SetColorArray(_colorArrayId, _colorArray);
@@ -70,9 +74,13 @@ namespace LabelSystem
          */
         public void ShowLabels()
         {
+            if (_colorArray == null)
+            {
+                return;
+            }
             foreach (var label in artefact.Labels)
             {
-                _colorArray[label.index].a = label.color.a;
+                _colorArray[label.id].a = label.color.a;
             }
 
             artefact.Renderer.material.SetColorArray(_colorArrayId, _colorArray);
@@ -80,7 +88,7 @@ namespace LabelSystem
         
         public void RemoveShaderLabel(Label label)
         {
-            _colorArray[label.index] = new Color(0, 0, 0, 0);
+            _colorArray[label.id] = new Color(0, 0, 0, 0);
             artefact.Renderer.material.SetColorArray(_colorArrayId, _colorArray);
             
             RemoveVertices(label);
@@ -88,16 +96,26 @@ namespace LabelSystem
 
         private void AddVertices(Label label)
         {
-            AddVertices(label.vertices, label.index);
+            AddVertices(label.vertices, label.id);
         }
         
         public void AddVertices(List<int> vertices, int lIndex)
         {
             var oldColors = artefact.Mesh.colors32;
-            var newColors = artefact.Mesh.colors32;
+            
+            // HACK 1: If Unity gave us an empty array, initialize it to the correct size
+            if (oldColors == null || oldColors.Length == 0)
+            {
+                oldColors = new Color32[artefact.Mesh.vertexCount];
+            }
+            
+            var newColors = oldColors;
 
             vertices.ForEach(vIndex =>
             {
+                // HACK 2: Ignore stale save data that points to non-existent vertices
+                if (vIndex < 0 || vIndex >= oldColors.Length) return; 
+
                 var vColor = oldColors[vIndex];
 
                 byte r = vColor.r;
@@ -118,16 +136,24 @@ namespace LabelSystem
 
         private void RemoveVertices(Label label)
         {
-            RemoveVertices(label.vertices, label.index);
+            RemoveVertices(label.vertices, label.id);
         }
         
         public void RemoveVertices(List<int> vertices, int lIndex)
         {
             var oldColors = artefact.Mesh.colors32;
-            var newColors = artefact.Mesh.colors32;
+            
+            if (oldColors == null || oldColors.Length == 0)
+            {
+                oldColors = new Color32[artefact.Mesh.vertexCount];
+            }
+            
+            var newColors = oldColors;
 
             vertices.ForEach(vIndex =>
             {
+                if (vIndex < 0 || vIndex >= oldColors.Length) return;
+
                 var vColor = oldColors[vIndex];
 
                 byte r = vColor.r;

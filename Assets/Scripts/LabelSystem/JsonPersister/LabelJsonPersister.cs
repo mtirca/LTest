@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using LabelSystem.JsonPersister.model;
+using Tools;
 using UnityEngine;
 
 namespace LabelSystem.JsonPersister
@@ -12,14 +11,14 @@ namespace LabelSystem.JsonPersister
 
         private static readonly string JsonPath = Path.Combine(Application.persistentDataPath, JsonFileName);
 
-        public static void Save(IEnumerable<Label> labels)
+        public static void Save(List<Label> labels)
         {
-            var serializableLabels = new Labels(labels);
+            var serializableLabels = new Labels {labels = labels};
             var jsonData = JsonUtility.ToJson(serializableLabels, true);
             File.WriteAllText(JsonPath, jsonData);
         }
 
-        public static IEnumerable<Label> Load()
+        public static List<Label> Load()
         {
             Labels serializableData;
             try
@@ -30,11 +29,11 @@ namespace LabelSystem.JsonPersister
             catch (FileNotFoundException)
             {
                 Debug.Log($"{JsonFileName} not found, creating file containing empty list...");
-                serializableData = new Labels(Enumerable.Empty<Label>());
+                serializableData = new Labels();
                 File.WriteAllText(JsonPath, JsonUtility.ToJson(serializableData, true));
             }
 
-            return serializableData.labels.AsEnumerable();
+            return serializableData.labels;
         }
     }
 }

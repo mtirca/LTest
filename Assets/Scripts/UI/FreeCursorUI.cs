@@ -40,7 +40,7 @@ namespace UI
             ResetValidationColors();
             try
             {
-                artefactTexture.SetTexture(redField.text, greenField.text, blueField.text);
+                // artefactTexture.SetCompositeTexture(redField.text, greenField.text, blueField.text);
             }
             catch (InvalidChannelExpressionException e)
             {

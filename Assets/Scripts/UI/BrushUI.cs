@@ -5,6 +5,7 @@ using ArtefactSystem;
 using LabelSystem;
 using Pick.Mode;
 using TMPro;
+using Tools;
 using UnityEngine.UI;
 using ColorUtility = UnityEngine.ColorUtility;
 
@@ -83,19 +84,19 @@ namespace UI
             {
                 EnsureHashPrefix(uiLabel.ColorField, uiLabel.Color);
             });
-            uiLabel.DeleteButton.onClick.AddListener(delegate { OnDeleteButtonClick(label.index); });
+            uiLabel.DeleteButton.onClick.AddListener(delegate { OnDeleteButtonClick(label.id); });
             uiLabel.VisibleToggle.onValueChanged.AddListener(delegate
             {
-                OnVisibleToggleChanged(uiLabel.VisibleToggle, label.index);
+                OnVisibleToggleChanged(uiLabel.VisibleToggle, label.id);
             });
             uiLabel.ApplyButton.onClick.AddListener(delegate
             {
-                OnApplyButtonClick(label.index, uiLabel.Name, uiLabel.Description, uiLabel.ColorField);
+                OnApplyButtonClick(label.id, uiLabel.Name, uiLabel.Description, uiLabel.ColorField);
             });
-            uiLabel.ActivateButton.onClick.AddListener(delegate { OnActivateButtonClick(label.index); });
-            uiLabel.GraphButton.onClick.AddListener(delegate { OnGenerateGraphButtonClick(label.index); });
+            uiLabel.ActivateButton.onClick.AddListener(delegate { OnActivateButtonClick(label.id); });
+            uiLabel.GraphButton.onClick.AddListener(delegate { OnGenerateGraphButtonClick(label.id); });
 
-            _uiLabels[label.index] = uiLabel;
+            _uiLabels[label.id] = uiLabel;
         }
 
         private void OnGenerateGraphButtonClick(int labelIndex)
@@ -176,9 +177,9 @@ namespace UI
         {
             foreach (var label in labels)
             {
-                if (!_uiLabels.TryGetValue(label.index, out var uiLabel)) return;
+                if (!_uiLabels.TryGetValue(label.id, out var uiLabel)) return;
                 Destroy(uiLabel.Object);
-                _uiLabels.Remove(label.index);
+                _uiLabels.Remove(label.id);
             }
         }
 
@@ -186,7 +187,7 @@ namespace UI
         {
             foreach (var label in labels)
             {
-                if (!_uiLabels.TryGetValue(label.index, out var uiLabel)) return;
+                if (!_uiLabels.TryGetValue(label.id, out var uiLabel)) return;
                 uiLabel.Name.text = label.name;
                 uiLabel.Description.text = label.description;
                 uiLabel.Color.color = ToUIColor(label.color);
@@ -214,7 +215,7 @@ namespace UI
         {
             foreach (var label in labels)
             {
-                if (!_uiLabels.TryGetValue(label.index, out var uiLabel)) return;
+                if (!_uiLabels.TryGetValue(label.id, out var uiLabel)) return;
                 uiLabel.VisibleToggle.isOn = label.IsVisible();
             }
         }

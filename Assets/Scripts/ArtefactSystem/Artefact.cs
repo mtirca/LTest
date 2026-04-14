@@ -3,8 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using LabelSystem;
 using LabelSystem.JsonPersister;
+using Tools;
+using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Events;
+using Utils;
 
 namespace ArtefactSystem
 {
@@ -14,11 +17,15 @@ namespace ArtefactSystem
         private MeshFilter MeshFilter { get; set; }
         public Mesh Mesh => MeshFilter.sharedMesh;
         public MeshCollider MeshCollider { get; private set; }
-
-        public Texture2D Texture
+        [Tooltip("The specific wavelengths (in nm) for each slice of the texture")]
+        public int[] Wavelengths;
+        
+        private static readonly int MSTexID = Shader.PropertyToID("_MSTex");
+        public Texture2DArray MSTex
         {
-            get => Renderer.material.mainTexture as Texture2D;
-            set => Renderer.material.mainTexture = value;
+            //todo
+            get => Renderer.material.GetTexture(MSTexID) as Texture2DArray;
+            set => Renderer.material.SetTexture(MSTexID, value);
         }
 
         public List<Label> Labels { get; private set; }
@@ -37,25 +44,35 @@ namespace ArtefactSystem
             InitLabels();
         }
 
-        /**
-         * <returns>The Colors of the vertices of label with labelIndex</returns>
-         */
-        public List<Color32> GetLabelVerticesColors(int labelIndex)
+        //todo update usages
+        public List<ushort[]> GetLabelVerticesSignatures(int labelIndex)
         {
-            return FindLabel(labelIndex).vertices.Select(GetTextureColorAtVertex).ToList();
+            return FindLabel(labelIndex).vertices.Select(GetSignatureAtVertex).ToList();
         }
 
-        private Color32 GetTextureColorAtVertex(int vIndex)
+        private ushort[] GetSignatureAtVertex(int vIndex)
         {
-            Vector2 uv = Mesh.uv[vIndex];
-            int x = Mathf.FloorToInt(uv.x * Texture.width);
-            int y = Mathf.FloorToInt(uv.y * Texture.height);
-            return Texture.GetPixel(x, y);
+            if (MSTex == null)
+            {
+                return Array.Empty<ushort>();
+            }
+
+            int flatIndex = TextureHelper.ComputePixelIndex(MSTex, Mesh.uv[vIndex]);
+            int bands = MSTex.depth;
+            ushort[] signature = new ushort[bands];
+
+            for (int slice = 0; slice < bands; slice++)
+            {
+                NativeArray<ushort> rawSliceData = MSTex.GetPixelData<ushort>(0, slice);
+                signature[slice] = rawSliceData[flatIndex];
+            }
+
+            return signature;
         }
 
         public Label FindLabel(int labelIndex)
         {
-            return Labels.Find(l => l.index == labelIndex);
+            return Labels.Find(l => l.id == labelIndex);
         }
 
         /**
@@ -138,7 +155,7 @@ namespace ArtefactSystem
                 throw new Exception(errMessage);
             }
 
-            int listIndex = Labels.FindIndex(l => l.index == labelIndex);
+            int listIndex = Labels.FindIndex(l => l.id == labelIndex);
             Labels[listIndex].name = newName;
             Labels[listIndex].description = newDescription;
             Labels[listIndex].color = newColor;
@@ -146,7 +163,7 @@ namespace ArtefactSystem
             ShaderUpdater.UpdateLabelColor(Labels[listIndex]);
 
             LabelJsonPersister.Save(Labels);
-            
+
             labelsChanged?.Invoke(LabelEvent.Update, new List<Label> { Labels[listIndex] });
         }
 
@@ -154,7 +171,7 @@ namespace ArtefactSystem
         {
             var newLabel = new Label(GetFirstAvailableLabelIndex());
 
-            var index = newLabel.index;
+            var index = newLabel.id;
             if (LabelExists(index))
             {
                 var errMessage = $"Label with index {index} already exists!";
@@ -170,9 +187,9 @@ namespace ArtefactSystem
 
             // Add label to disk
             LabelJsonPersister.Save(Labels);
-            
-            labelsChanged?.Invoke(LabelEvent.Add, new List<Label> {newLabel});
-            
+
+            labelsChanged?.Invoke(LabelEvent.Add, new List<Label> { newLabel });
+
             return newLabel;
         }
     }

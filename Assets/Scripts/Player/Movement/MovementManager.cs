@@ -1,6 +1,8 @@
 using System;
+using Tools;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.EventSystems;
 
 namespace Player.Movement
 {
@@ -10,11 +12,12 @@ namespace Player.Movement
         FreeLook,
         Orbit
     }
-    
+
     [RequireComponent(typeof(Camera))]
     public class MovementManager : MonoBehaviour
     {
         private Movement _movement;
+
         public Movement Movement
         {
             get => _movement;
@@ -25,14 +28,17 @@ namespace Player.Movement
                 onGlobalStateChanged?.Invoke(value);
             }
         }
-        
+
+        [SerializeField] private ToolManager toolManager;
+
         private KeyMovement _keyMovement;
         private MouseMovement _mouseMovement;
         private OrbitingMovement _orbitingMovement;
         private RollMovement _rollMovement;
-        
+
+        //todo remove
         public UnityEvent<Movement> onGlobalStateChanged;
-        
+
         private void Awake()
         {
             _keyMovement = GetComponent<KeyMovement>();
@@ -43,11 +49,18 @@ namespace Player.Movement
 
         private void Start()
         {
-            _movement = Movement.None;
+            Movement = Movement.None;
         }
 
         private void UpdateMovementScripts(Movement movement)
         {
+            if (toolManager)
+            {
+                toolManager.enabled = movement == Movement.None;
+            }
+
+            Cursor.visible = movement == Movement.None;
+
             switch (movement)
             {
                 case Movement.None:
@@ -75,7 +88,10 @@ namespace Player.Movement
 
         private void Update()
         {
-            if (Movement == Movement.None && Input.GetKey(KeyCode.LeftAlt))
+            bool isHoveringUI = EventSystem.current && EventSystem.current.IsPointerOverGameObject();
+
+            // Orbit Logic (Alt)
+            if (Movement == Movement.None && Input.GetKey(KeyCode.LeftAlt) && !isHoveringUI)
             {
                 Movement = Movement.Orbit;
             }
@@ -85,7 +101,8 @@ namespace Player.Movement
                 Movement = Movement.None;
             }
 
-            if (Movement == Movement.None && Input.GetMouseButton(1))
+            // FreeLook Logic (Right Click)
+            if (Movement == Movement.None && Input.GetMouseButton(1) && !isHoveringUI)
             {
                 Movement = Movement.FreeLook;
             }
