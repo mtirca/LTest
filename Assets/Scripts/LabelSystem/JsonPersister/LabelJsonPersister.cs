@@ -5,6 +5,7 @@ using UnityEngine;
 
 namespace LabelSystem.JsonPersister
 {
+    //todo fix and use or delete
     public static class LabelJsonPersister
     {
         private const string JsonFileName = "labels.json";

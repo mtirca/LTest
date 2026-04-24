@@ -1,3 +1,4 @@
+using System.Linq;
 using ArtefactSystem;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -13,69 +14,55 @@ namespace Tools
         [SerializeField] private LabelManager labelManager;
 
         [Header("Brush Settings")] public int maskWidth = 2048;
+        //todo these should be defined somewhere artefact-related
         public int maskHeight = 1536;
         public int brushRadius = 15;
-        public bool isErasing = false;
+        public bool isErasing;
 
-        private Texture2D _maskTexture;
+        [Header("Advanced Rendering")] public int maxLabels = 64;
+
+        private Texture2D _paletteTexture;
         private Renderer _artefactRenderer;
+        private Texture2D _activeCanvas;
+        private Label _lastPaintedLabel;
+        
+        public Texture2DArray MaskTexArray { get; private set; }
 
-        public Texture2D MaskTexture => _maskTexture;
-
-        private static readonly int LabelMaskID = Shader.PropertyToID("_LabelMask");
+        private static readonly int MaskArrayID = Shader.PropertyToID("_MaskArray");
+        private static readonly int PaletteID = Shader.PropertyToID("_Palette");
+        private static readonly int ActiveCountID = Shader.PropertyToID("_LabelCount");
 
         private void Awake()
         {
-            InitializeBlankCanvas();
+            InitializeGPUArrays();
         }
 
-        /// <summary>
-        /// Finds all pixels of the old color and replaces them with the new color.
-        /// </summary>
-        public void ReplaceColorInMask(Color oldColor, Color newColor)
+        private void InitializeGPUArrays()
         {
-            Color[] pixels = _maskTexture.GetPixels();
-            for (int i = 0; i < pixels.Length; i++)
-            {
-                // Tolerance check for floating point color inaccuracies
-                if (Mathf.Abs(pixels[i].r - oldColor.r) < 0.01f && 
-                    Mathf.Abs(pixels[i].g - oldColor.g) < 0.01f && 
-                    Mathf.Abs(pixels[i].b - oldColor.b) < 0.01f)
-                {
-                    pixels[i] = newColor;
-                }
-            }
-            _maskTexture.SetPixels(pixels);
-            _maskTexture.Apply();
-        }
-
-        /// <summary>
-        /// Erases all paint associated with a specific color.
-        /// </summary>
-        public void DeleteColorFromMask(Color colorToDelete)
-        {
-            ReplaceColorInMask(colorToDelete, Color.clear);
-        }
-        
-        private void InitializeBlankCanvas()
-        {
-            _maskTexture = new Texture2D(maskWidth, maskHeight, TextureFormat.RGBA32, false, true)
+            MaskTexArray = new Texture2DArray(maskWidth, maskHeight, maxLabels, TextureFormat.R8, false, true)
             {
                 filterMode = FilterMode.Point,
                 wrapMode = TextureWrapMode.Clamp
             };
 
-            Color[] clearPixels = new Color[maskWidth * maskHeight];
-            for (int i = 0; i < clearPixels.Length; i++)
+            // Initialize the Palette Texture (64x1 pixels)
+            _paletteTexture = new Texture2D(maxLabels, 1, TextureFormat.RGBA32, false, true)
             {
-                clearPixels[i] = Color.clear;
-            }
+                filterMode = FilterMode.Point,
+                wrapMode = TextureWrapMode.Clamp
+            };
 
-            _maskTexture.SetPixels(clearPixels);
-            _maskTexture.Apply();
-
+            _activeCanvas = new Texture2D(maskWidth, maskHeight, TextureFormat.R8, false, true)
+            {
+                filterMode = FilterMode.Point,
+                wrapMode = TextureWrapMode.Clamp
+            };
+            
             _artefactRenderer = artefact.GetComponent<Renderer>();
-            _artefactRenderer.material.SetTexture(LabelMaskID, _maskTexture);
+            _artefactRenderer.material.SetTexture(MaskArrayID, MaskTexArray);
+            _artefactRenderer.material.SetTexture(PaletteID, _paletteTexture);
+
+            UpdateShaderVariables();
         }
 
         private void Update()
@@ -94,15 +81,18 @@ namespace Tools
 
         private void PaintSurface()
         {
-            Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
+            if (labelManager.activeLabel == null)
+            {
+                return;
+            }
 
+            Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
             if (!Physics.Raycast(ray, out RaycastHit hit) || hit.collider.gameObject != artefact.gameObject)
             {
                 return;
             }
 
             Vector2 uv = hit.textureCoord;
-
             int pixelX = Mathf.FloorToInt(uv.x * maskWidth);
             int pixelY = Mathf.FloorToInt(uv.y * maskHeight);
 
@@ -111,38 +101,91 @@ namespace Tools
 
         private void DrawCircleOnTexture(int centerX, int centerY)
         {
-            Color paintColor;
-            if (isErasing)
+            Label activeLabel = labelManager.activeLabel;
+            
+            // Sync the active canvas if the user selected a new label
+            //todo ??? whats this
+            if (activeLabel != _lastPaintedLabel)
             {
-                paintColor = Color.clear;
+                _activeCanvas.SetPixels32(activeLabel.Pixels);
+                _activeCanvas.Apply();
+                _lastPaintedLabel = activeLabel;
             }
-            else if (labelManager.activeLabel != null)
-            {
-                paintColor = labelManager.activeLabel.color;
-            }
-            else
-            {
-                return;
-            }
+            
+            // 1. Calculate the exact bounding box of the brush stroke
+            //todo this works for 2D textures on 2D planes. but wont this logic not work for 3d objects where their texture can be scrambled? because no one
+            // can guarantee that on the texture if you go left 2 pixels, its the same as going left on the object
+            int startX = Mathf.Clamp(centerX - brushRadius, 0, maskWidth - 1);
+            int startY = Mathf.Clamp(centerY - brushRadius, 0, maskHeight - 1);
+            int endX = Mathf.Clamp(centerX + brushRadius, 0, maskWidth - 1);
+            int endY = Mathf.Clamp(centerY + brushRadius, 0, maskHeight - 1);
 
-            for (int x = -brushRadius; x <= brushRadius; x++)
+            int blockWidth = endX - startX + 1;
+            int blockHeight = endY - startY + 1;
+            
+            // We only create an array for the pixels inside the brush box (~900 pixels instead of 3 Million)
+            Color32[] blockColors = new Color32[blockWidth * blockHeight];
+            
+            bool textureChanged = false;
+            //todo extract clear and red
+            Color32 paintValue = isErasing ? new Color32(0, 0, 0, 0) : new Color32(255, 0, 0, 0);
+
+            for (int y = 0; y < blockHeight; y++)
             {
-                for (int y = -brushRadius; y <= brushRadius; y++)
+                for (int x = 0; x < blockWidth; x++)
                 {
-                    if (x * x + y * y <= brushRadius * brushRadius)
-                    {
-                        int drawX = centerX + x;
-                        int drawY = centerY + y;
+                    int worldX = startX + x;
+                    int worldY = startY + y;
+                    int flatIndex = worldY * maskWidth + worldX;
 
-                        if (drawX >= 0 && drawX < maskWidth && drawY >= 0 && drawY < maskHeight)
+                    int dx = worldX - centerX;
+                    int dy = worldY - centerY;
+
+                    // If inside the circle, apply paint
+                    if (dx * dx + dy * dy <= brushRadius * brushRadius)
+                    {
+                        if (activeLabel.Pixels[flatIndex].r != paintValue.r)
                         {
-                            _maskTexture.SetPixel(drawX, drawY, paintColor);
+                            activeLabel.Pixels[flatIndex] = paintValue;
+                            textureChanged = true;
                         }
                     }
+                    
+                    // Copy the state of the RAM into our tiny block array
+                    blockColors[y * blockWidth + x] = activeLabel.Pixels[flatIndex];
                 }
             }
 
-            _maskTexture.Apply();
+            if (textureChanged)
+            {
+                // Push ONLY the tiny block to the GPU
+                _activeCanvas.SetPixels32(startX, startY, blockWidth, blockHeight, blockColors);
+                _activeCanvas.Apply();
+                
+                // Instantly transfer the 2D texture directly into the Array slice purely on the GPU
+                Graphics.CopyTexture(_activeCanvas, 0, 0, MaskTexArray, activeLabel.sliceIndex, 0);
+            }
+        }
+        
+        /// <summary>
+        /// To be called whenever a label is created, deleted, or changes color.
+        /// </summary>
+        public void UpdateShaderVariables()
+        {
+            // Tell the shader the highest index we are currently using, so it doesn't loop unnecessarily (performance reasons only)
+            int highestIndex = labelManager.allLabels.Select(label => label.sliceIndex).Prepend(0).Max();
+            _artefactRenderer.material.SetFloat(ActiveCountID, highestIndex + 1);
+
+            // Update the Nx1 color palette
+            for (int i = 0; i < maxLabels; i++)
+            {
+                _paletteTexture.SetPixel(i, 0, Color.clear);
+            }
+            foreach (var label in labelManager.allLabels.Where(label => label.visible))
+            {
+                _paletteTexture.SetPixel(label.sliceIndex, 0, label.color);
+            }
+            _paletteTexture.Apply();
         }
     }
 }

@@ -33,7 +33,8 @@ void stack_labels_float(UnityTexture2DArray mask_array, UnityTexture2D palette, 
 
             // 3. Blend the colors together (Standard Alpha Blending)
             final_color = lerp(final_color, label_color.rgb, paint_opacity * label_color.a);
-            final_alpha = saturate(final_alpha + paint_opacity * label_color.a);
+            // 0.5 for some transparency
+            final_alpha = saturate(final_alpha + paint_opacity * label_color.a * 0.5);
         }
     }
 

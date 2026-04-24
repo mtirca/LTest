@@ -1,136 +1,182 @@
-using System;
 using System.Collections.Generic;
-using UnityEngine;
+using System.Linq;
 using ArtefactSystem;
-using LabelSystem;
-using Pick.Mode;
 using TMPro;
 using Tools;
+using UnityEngine;
 using UnityEngine.UI;
-using ColorUtility = UnityEngine.ColorUtility;
 
 namespace UI
 {
     public class BrushUI : MonoBehaviour
     {
+        [Header("References")]
         [SerializeField] private GameObject labelPrefab;
         [SerializeField] private Transform contentHolder;
         [SerializeField] private Artefact artefact;
         [SerializeField] private Brush brush;
+        [SerializeField] private LabelManager labelManager;
         [SerializeField] private HistogramUI histogramUI;
+        
+        [Header("Toggles")]
         [SerializeField] private Toggle brushToggle;
         [SerializeField] private Toggle eraserToggle;
         
-        private readonly Dictionary<int, UILabel> _uiLabels = new();
-
-        private UILabel _activeLabel;
+        // Maps the Label ID to the UI wrapper
+        private readonly Dictionary<string, UILabel> _uiLabels = new();
+        private UILabel _activeUILabel;
 
         private void Start()
         {
-            AddUILabels(artefact.Labels);
+            // Initialize UI for any labels loaded from the JSON save file
+            RefreshAllUILabels();
         }
 
-        private void AddUILabels(List<Label> labels)
+        /// <summary>
+        /// Clears the UI board and instantiates rows for all current labels.
+        /// Call this on Start, or if you completely reload a save file.
+        /// </summary>
+        public void RefreshAllUILabels()
         {
-            labels.ForEach(AddUILabel);
-        }
+            foreach (var kvp in _uiLabels.Where(kvp => kvp.Value?.Object != null))
+            {
+                Destroy(kvp.Value.Object);
+            }
+            _uiLabels.Clear();
 
-        private static Color ToUIColor(Color color)
-        {
-            return new Color(color.r, color.g, color.b, 1);
+            foreach (var label in labelManager.allLabels)
+            {
+                AddUILabel(label);
+            }
         }
 
         public void OnPaintToggled()
         {
-            brush.ActivatePaint();
+            brush.isErasing = false;
         }
 
         public void OnEraserToggled()
         {
-            brush.ActivateEraser();
+            brush.isErasing = true;
         }
         
         private void AddUILabel(Label label)
         {
             var uiLabel = new UILabel(labelPrefab, contentHolder)
             {
-                Name =
-                {
-                    text = label.name
-                },
-                Description =
-                {
-                    text = label.description
-                },
-                Color =
-                {
-                    color = ToUIColor(label.color)
-                },
-                ColorField =
-                {
-                    text = "#" + ColorUtility.ToHtmlStringRGB(label.color)
-                },
-                VisibleToggle =
-                {
-                    isOn = label.IsVisible()
-                }
+                Name = { text = label.name },
+                Description = { text = label.description },
+                Color = { color = ToUIColor(label.color) },
+                ColorField = { text = "#" + ColorUtility.ToHtmlStringRGB(label.color) },
+                VisibleToggle = { isOn = label.visible } 
             };
 
-            uiLabel.ColorField.onValueChanged.AddListener(delegate
-            {
-                OnColorFieldChanged(uiLabel.ColorField, uiLabel.Color);
+            // Setup Listeners
+            uiLabel.ColorField.onValueChanged.AddListener(delegate { OnColorFieldChanged(uiLabel.ColorField, uiLabel.Color); });
+            uiLabel.ColorField.onValueChanged.AddListener(delegate { EnsureHashPrefix(uiLabel.ColorField, uiLabel.Color); });
+            
+            uiLabel.DeleteButton.onClick.AddListener(delegate { OnDeleteButtonClick(label); });
+            uiLabel.VisibleToggle.onValueChanged.AddListener(delegate { OnVisibleToggleChanged(uiLabel.VisibleToggle, label); });
+            
+            uiLabel.ApplyButton.onClick.AddListener(delegate { 
+                OnApplyButtonClick(label, uiLabel.Name.text, uiLabel.Description.text, uiLabel.ColorField.text); 
             });
-            uiLabel.ColorField.onValueChanged.AddListener(delegate
-            {
-                EnsureHashPrefix(uiLabel.ColorField, uiLabel.Color);
-            });
-            uiLabel.DeleteButton.onClick.AddListener(delegate { OnDeleteButtonClick(label.id); });
-            uiLabel.VisibleToggle.onValueChanged.AddListener(delegate
-            {
-                OnVisibleToggleChanged(uiLabel.VisibleToggle, label.id);
-            });
-            uiLabel.ApplyButton.onClick.AddListener(delegate
-            {
-                OnApplyButtonClick(label.id, uiLabel.Name, uiLabel.Description, uiLabel.ColorField);
-            });
+            
             uiLabel.ActivateButton.onClick.AddListener(delegate { OnActivateButtonClick(label.id); });
-            uiLabel.GraphButton.onClick.AddListener(delegate { OnGenerateGraphButtonClick(label.id); });
+            //TODO
+            // uiLabel.GraphButton.onClick.AddListener(delegate { histogramUI.CreateWindow(label.id); });
 
             _uiLabels[label.id] = uiLabel;
+            
+            // If this is the active label, highlight it immediately
+            if (labelManager.activeLabel == label) OnActivateButtonClick(label.id);
         }
 
-        private void OnGenerateGraphButtonClick(int labelIndex)
+        private void OnActivateButtonClick(string labelId)
         {
-            histogramUI.CreateWindow(labelIndex);
-        }
+            if (!_uiLabels.TryGetValue(labelId, out var uiLabel)) return;
 
-        /**
-         * If the active label is pressed, it is deactivated
-         * If another label is pressed, the current active label is also deactivated, and the pressed label is activated
-         */
-        private void OnActivateButtonClick(int labelIndex)
-        {
-            if (!_uiLabels.TryGetValue(labelIndex, out var uiLabel)) return;
-
-            // Deactivate old label
-            if (_activeLabel?.Object)
+            // Deactivate old label UI visually
+            if (_activeUILabel?.Object)
             {
-                var image = _activeLabel.Object.GetComponent<Image>();
+                var image = _activeUILabel.Object.GetComponent<Image>();
                 image.color = new Color32(255, 255, 255, 100);
             }
 
-            if (uiLabel == _activeLabel)
+            if (uiLabel == _activeUILabel)
             {
-                brush.ClearActiveLabel();
-                _activeLabel = null;
+                labelManager.activeLabel = null;
+                _activeUILabel = null;
             }
-            else // Activate new label
+            else
             {
-                brush.ActivateLabel(labelIndex);
-                _activeLabel = uiLabel;
-                var img = _activeLabel.Object.GetComponent<Image>();
+                labelManager.activeLabel = labelManager.allLabels.Find(l => l.id == labelId);
+                _activeUILabel = uiLabel;
+                
+                var img = _activeUILabel.Object.GetComponent<Image>();
                 img.color = new Color32(255, 0, 0, 100);
             }
+        }
+
+        public void OnNewLabelClick()
+        {
+            // Create random color for the new label
+            Color randomColor = Random.ColorHSV(0f, 1f, 0.8f, 1f, 0.8f, 1f);
+            
+            // Generate the data
+            Label newLabel = labelManager.CreateNewLabel("New Label", randomColor);
+            
+            // Instantiate the UI
+            AddUILabel(newLabel);
+        }
+
+        private void OnApplyButtonClick(Label targetLabel, string newName, string newDesc, string hexColor)
+        {
+            if (!ColorUtility.TryParseHtmlString(hexColor, out var color))
+            {
+                Debug.LogWarning("Invalid hex color submitted.");
+                return;
+            }
+
+            // Update the data strictly in RAM
+            targetLabel.name = newName;
+            targetLabel.description = newDesc;
+            targetLabel.color = color;
+
+            // Tell the brush to push the new color to the GPU
+            brush.UpdateShaderVariables();
+        }
+
+        private void OnVisibleToggleChanged(Toggle visibleToggle, Label targetLabel)
+        {
+            // Update data
+            targetLabel.visible = visibleToggle.isOn;
+
+            // Refresh shader Palette. (If hidden, brush.UpdateShaderVariables will push Color.clear)
+            brush.UpdateShaderVariables();
+        }
+
+        private void OnDeleteButtonClick(Label labelToDelete)
+        {
+            if (!_uiLabels.TryGetValue(labelToDelete.id, out var uiLabel)) return;
+
+            // 1. Destroy the UI object
+            Destroy(uiLabel.Object);
+            _uiLabels.Remove(labelToDelete.id);
+
+            // 2. Use our safe array-shifting delete method in the manager
+            labelManager.DeleteLabel(labelToDelete);
+            
+            // 3. Ensure the UI isn't still "highlighting" a deleted label
+            if (labelManager.activeLabel == null && _activeUILabel == uiLabel)
+            {
+                _activeUILabel = null;
+            }
+        }
+
+        private static Color ToUIColor(Color color)
+        {
+            return new Color(color.r, color.g, color.b, 1);
         }
 
         private void EnsureHashPrefix(TMP_InputField colorField, Image colorImage)
@@ -154,96 +200,8 @@ namespace UI
             {
                 newColor = Color.white;
             }
-
             newColor.a = 1;
             colorImage.color = newColor;
-        }
-
-
-        private void OnApplyButtonClick(int labelIndex, TMP_InputField uiLabelName, TMP_InputField uiLabelDescription,
-            TMP_InputField uiColorField)
-        {
-            if (!_uiLabels.TryGetValue(labelIndex, out _)) return;
-            if (!ColorUtility.TryParseHtmlString(uiColorField.text, out var color))
-            {
-                Debug.LogError("Invalid color");
-                throw new Exception("Invalid color");
-            }
-
-            brush.UpdateLabel(labelIndex, uiLabelName.text, uiLabelDescription.text, color);
-        }
-
-        private void RemoveUILabels(List<Label> labels)
-        {
-            foreach (var label in labels)
-            {
-                if (!_uiLabels.TryGetValue(label.id, out var uiLabel)) return;
-                Destroy(uiLabel.Object);
-                _uiLabels.Remove(label.id);
-            }
-        }
-
-        private void UpdateUILabels(List<Label> labels)
-        {
-            foreach (var label in labels)
-            {
-                if (!_uiLabels.TryGetValue(label.id, out var uiLabel)) return;
-                uiLabel.Name.text = label.name;
-                uiLabel.Description.text = label.description;
-                uiLabel.Color.color = ToUIColor(label.color);
-            }
-        }
-
-        private void OnDeleteButtonClick(int labelIndex)
-        {
-            brush.RemoveLabel(labelIndex);
-        }
-
-        private void OnVisibleToggleChanged(Toggle visibleToggle, int labelIndex)
-        {
-            if (visibleToggle.isOn)
-            {
-                artefact.ShowLabel(labelIndex);
-            }
-            else
-            {
-                artefact.HideLabel(labelIndex);
-            }
-        }
-
-        private void UpdateVisibleToggleUI(List<Label> labels)
-        {
-            foreach (var label in labels)
-            {
-                if (!_uiLabels.TryGetValue(label.id, out var uiLabel)) return;
-                uiLabel.VisibleToggle.isOn = label.IsVisible();
-            }
-        }
-
-        public void OnNewLabelClick()
-        {
-            brush.NewLabel();
-        }
-
-        public void ModifyUILabels(LabelEvent labelEvent, List<Label> labels)
-        {
-            switch (labelEvent)
-            {
-                case LabelEvent.Add:
-                    AddUILabels(labels);
-                    break;
-                case LabelEvent.Remove:
-                    RemoveUILabels(labels);
-                    break;
-                case LabelEvent.VisibleUpdate:
-                    UpdateVisibleToggleUI(labels);
-                    break;
-                case LabelEvent.Update:
-                    UpdateUILabels(labels);
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(labelEvent));
-            }
         }
     }
 }
