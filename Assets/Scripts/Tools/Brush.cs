@@ -2,67 +2,114 @@ using System.Linq;
 using ArtefactSystem;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using Utils;
 
 namespace Tools
 {
     public class Brush : MonoBehaviour
     {
-        [Header("References")] [SerializeField]
-        private Camera mainCamera;
-
+        [Header("References")] 
+        [SerializeField] private Camera mainCamera;
         [SerializeField] private Artefact artefact;
         [SerializeField] private LabelManager labelManager;
 
-        [Header("Brush Settings")] public int maskWidth = 2048;
-        //todo these should be defined somewhere artefact-related
+        [Header("GPU Resources")]
+        public ComputeShader brushCompute;
+        public Shader bakerShader;
+
+        [Header("Brush Settings")] 
+        public int maskWidth = 2048;
         public int maskHeight = 1536;
-        public int brushRadius = 15;
+        public float brushRadius = 0.5f;
         public bool isErasing;
 
-        [Header("Advanced Rendering")] public int maxLabels = 64;
+        [Header("Advanced Rendering")] 
+        public int maxLabels = 64;
 
+        // GPU Buffers
+        public RenderTexture MaskTexArray { get; private set; }
+        private RenderTexture _positionMap;
+        private RenderTexture _normalMap;
+        
         private Texture2D _paletteTexture;
         private Renderer _artefactRenderer;
-        private Texture2D _activeCanvas;
-        private Label _lastPaintedLabel;
-        
-        public Texture2DArray MaskTexArray { get; private set; }
+        private Material _bakerMaterial;
+        private Mesh _targetMesh;
+        private int _computeKernel;
 
+        // Shader Properties
         private static readonly int MaskArrayID = Shader.PropertyToID("_MaskArray");
         private static readonly int PaletteID = Shader.PropertyToID("_Palette");
         private static readonly int ActiveCountID = Shader.PropertyToID("_LabelCount");
+        private static readonly int PositionMap = Shader.PropertyToID("_PositionMap");
+        private static readonly int NormalMap = Shader.PropertyToID("_NormalMap");
+        private static readonly int HitPosition = Shader.PropertyToID("_HitPosition");
+        private static readonly int HitNormal = Shader.PropertyToID("_HitNormal");
+        private static readonly int BrushRadius = Shader.PropertyToID("_BrushRadius");
+        private static readonly int PaintValue = Shader.PropertyToID("_PaintValue");
+        private static readonly int ActiveSlice = Shader.PropertyToID("_ActiveSlice");
+        private static readonly int MaskResolution = Shader.PropertyToID("_MaskResolution");
 
         private void Awake()
         {
+            _targetMesh = artefact.GetComponent<MeshFilter>().sharedMesh;
+            _artefactRenderer = artefact.GetComponent<Renderer>();
+            _bakerMaterial = new Material(bakerShader);
+            _computeKernel = brushCompute.FindKernel("PaintMask");
+
             InitializeGPUArrays();
+            BakeSpatialData();
         }
 
         private void InitializeGPUArrays()
         {
-            MaskTexArray = new Texture2DArray(maskWidth, maskHeight, maxLabels, TextureFormat.R8, false, true)
+            MaskTexArray = new RenderTexture(maskWidth, maskHeight, 0, RenderTextureFormat.R8)
             {
-                filterMode = FilterMode.Point,
-                wrapMode = TextureWrapMode.Clamp
+                dimension = UnityEngine.Rendering.TextureDimension.Tex2DArray,
+                volumeDepth = maxLabels,
+                enableRandomWrite = true,
+                filterMode = FilterMode.Point
             };
+            MaskTexArray.Create();
 
-            // Initialize the Palette Texture (64x1 pixels)
-            _paletteTexture = new Texture2D(maxLabels, 1, TextureFormat.RGBA32, false, true)
-            {
-                filterMode = FilterMode.Point,
-                wrapMode = TextureWrapMode.Clamp
-            };
+            // Setup Spatial Maps for the Baker
+            _positionMap = new RenderTexture(maskWidth, maskHeight, 0, RenderTextureFormat.ARGBFloat)
+                {
+                    enableRandomWrite = true
+                };
+            _positionMap.Create();
 
-            _activeCanvas = new Texture2D(maskWidth, maskHeight, TextureFormat.R8, false, true)
-            {
-                filterMode = FilterMode.Point,
-                wrapMode = TextureWrapMode.Clamp
-            };
-            
-            _artefactRenderer = artefact.GetComponent<Renderer>();
+            _normalMap = new RenderTexture(maskWidth, maskHeight, 0, RenderTextureFormat.ARGBFloat)
+                {
+                    enableRandomWrite = true
+                };
+            _normalMap.Create();
+
+            // Initialize Palette
+            _paletteTexture = TextureUtils.CreateRaw(maxLabels, 1, TextureFormat.RGBA32);
+
+            // Bind to the Artifact's material's shader
             _artefactRenderer.material.SetTexture(MaskArrayID, MaskTexArray);
             _artefactRenderer.material.SetTexture(PaletteID, _paletteTexture);
 
+            // Bind to the compute shader
+            brushCompute.SetTexture(_computeKernel, PositionMap, _positionMap);
+            brushCompute.SetTexture(_computeKernel, NormalMap, _normalMap);
+            brushCompute.SetTexture(_computeKernel, MaskArrayID, MaskTexArray);
+            
             UpdateShaderVariables();
+        }
+
+        private void BakeSpatialData()
+        {
+            RenderBuffer[] mrt = { _positionMap.colorBuffer, _normalMap.colorBuffer };
+            Graphics.SetRenderTarget(mrt, _positionMap.depthBuffer);
+            GL.Clear(false, true, Color.clear);
+            
+            _bakerMaterial.SetPass(0);
+            Graphics.DrawMeshNow(_targetMesh, artefact.transform.localToWorldMatrix);
+            
+            Graphics.SetRenderTarget(null);
         }
 
         private void Update()
@@ -73,10 +120,7 @@ namespace Tools
                 return;
             }
 
-            if (Input.GetMouseButton(0))
-            {
-                PaintSurface();
-            }
+            PaintSurface();
         }
 
         private void PaintSurface()
@@ -92,79 +136,27 @@ namespace Tools
                 return;
             }
 
-            Vector2 uv = hit.textureCoord;
-            int pixelX = Mathf.FloorToInt(uv.x * maskWidth);
-            int pixelY = Mathf.FloorToInt(uv.y * maskHeight);
-
-            DrawCircleOnTexture(pixelX, pixelY);
+            ExecuteGPUPaint(hit.point, hit.normal);
         }
 
-        private void DrawCircleOnTexture(int centerX, int centerY)
+        private void ExecuteGPUPaint(Vector3 hitPos, Vector3 hitNorm)
         {
-            Label activeLabel = labelManager.activeLabel;
+            // Upload Variables
+            brushCompute.SetVector(HitPosition, hitPos);
+            brushCompute.SetVector(HitNormal, hitNorm);
+            brushCompute.SetFloat(BrushRadius, brushRadius);
             
-            // Sync the active canvas if the user selected a new label
-            //todo ??? whats this
-            if (activeLabel != _lastPaintedLabel)
-            {
-                _activeCanvas.SetPixels32(activeLabel.Pixels);
-                _activeCanvas.Apply();
-                _lastPaintedLabel = activeLabel;
-            }
+            // Set paint value based on toggle (1.0 for painting, 0.0 for erasing)
+            brushCompute.SetFloat(PaintValue, isErasing ? 0.0f : 1.0f);
             
-            // 1. Calculate the exact bounding box of the brush stroke
-            //todo this works for 2D textures on 2D planes. but wont this logic not work for 3d objects where their texture can be scrambled? because no one
-            // can guarantee that on the texture if you go left 2 pixels, its the same as going left on the object
-            int startX = Mathf.Clamp(centerX - brushRadius, 0, maskWidth - 1);
-            int startY = Mathf.Clamp(centerY - brushRadius, 0, maskHeight - 1);
-            int endX = Mathf.Clamp(centerX + brushRadius, 0, maskWidth - 1);
-            int endY = Mathf.Clamp(centerY + brushRadius, 0, maskHeight - 1);
-
-            int blockWidth = endX - startX + 1;
-            int blockHeight = endY - startY + 1;
+            // Sync with your Label Manager
+            brushCompute.SetInt(ActiveSlice, labelManager.activeLabel.sliceIndex);
+            brushCompute.SetInts(MaskResolution, maskWidth, maskHeight);
             
-            // We only create an array for the pixels inside the brush box (~900 pixels instead of 3 Million)
-            Color32[] blockColors = new Color32[blockWidth * blockHeight];
-            
-            bool textureChanged = false;
-            //todo extract clear and red
-            Color32 paintValue = isErasing ? new Color32(0, 0, 0, 0) : new Color32(255, 0, 0, 0);
-
-            for (int y = 0; y < blockHeight; y++)
-            {
-                for (int x = 0; x < blockWidth; x++)
-                {
-                    int worldX = startX + x;
-                    int worldY = startY + y;
-                    int flatIndex = worldY * maskWidth + worldX;
-
-                    int dx = worldX - centerX;
-                    int dy = worldY - centerY;
-
-                    // If inside the circle, apply paint
-                    if (dx * dx + dy * dy <= brushRadius * brushRadius)
-                    {
-                        if (activeLabel.Pixels[flatIndex].r != paintValue.r)
-                        {
-                            activeLabel.Pixels[flatIndex] = paintValue;
-                            textureChanged = true;
-                        }
-                    }
-                    
-                    // Copy the state of the RAM into our tiny block array
-                    blockColors[y * blockWidth + x] = activeLabel.Pixels[flatIndex];
-                }
-            }
-
-            if (textureChanged)
-            {
-                // Push ONLY the tiny block to the GPU
-                _activeCanvas.SetPixels32(startX, startY, blockWidth, blockHeight, blockColors);
-                _activeCanvas.Apply();
-                
-                // Instantly transfer the 2D texture directly into the Array slice purely on the GPU
-                Graphics.CopyTexture(_activeCanvas, 0, 0, MaskTexArray, activeLabel.sliceIndex, 0);
-            }
+            // Dispatch
+            int threadGroupsX = Mathf.CeilToInt(maskWidth / 8.0f);
+            int threadGroupsY = Mathf.CeilToInt(maskHeight / 8.0f);
+            brushCompute.Dispatch(_computeKernel, threadGroupsX, threadGroupsY, 1);
         }
         
         /// <summary>
@@ -186,6 +178,14 @@ namespace Tools
                 _paletteTexture.SetPixel(label.sliceIndex, 0, label.color);
             }
             _paletteTexture.Apply();
+        }
+
+        private void OnDestroy()
+        {
+            if (MaskTexArray != null) MaskTexArray.Release();
+            if (_positionMap != null) _positionMap.Release();
+            if (_normalMap != null) _normalMap.Release();
+            if (_bakerMaterial != null) Destroy(_bakerMaterial);
         }
     }
 }

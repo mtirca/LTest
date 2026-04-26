@@ -68,7 +68,7 @@ namespace Tools
         {
             int bands = msTex.depth;
             ushort[] spectralSignature = new ushort[bands];
-            int flatIndex = TextureHelper.ComputePixelIndex(msTex, uv);
+            int flatIndex = TextureUtils.ComputePixelIndex(msTex, uv);
 
             for (int slice = 0; slice < bands; slice++)
             {

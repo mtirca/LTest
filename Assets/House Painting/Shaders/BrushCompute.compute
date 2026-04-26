@@ -1,0 +1,45 @@
+#pragma kernel PaintMask
+
+// --- Inputs from C# ---
+float3 _HitPosition;
+float3 _HitNormal;
+float _BrushRadius;
+float _PaintValue;
+int _ActiveSlice;
+uint2 _MaskResolution;
+
+// --- The Baked 3D Data ---
+Texture2D _PositionMap;
+Texture2D _NormalMap;
+
+// --- The Output (Your Texture2DArray) ---
+// Note: "RW" stands for Read/Write. Compute shaders can directly modify this!
+RWTexture2DArray<float> _MaskArray;
+
+[numthreads(8, 8, 1)]
+void PaintMask (uint3 id : SV_DispatchThreadID)
+{
+    // This thread is outside the bounds of the texture
+    if (id.x >= _MaskResolution.x || id.y >= _MaskResolution.y) return;
+    
+    // 3D location of the pixel
+    float4 posData = _PositionMap[id.xy];
+    // Normal of the pixel
+    float4 normData = _NormalMap[id.xy];
+
+    // If alpha is 0, this pixel is empty space on the UV map. Ignore it.
+    if (posData.a < 0.1) return;
+
+    float3 pixelWorldPos = posData.xyz;
+    float3 pixelWorldNorm = normData.xyz;
+
+    float dist = distance(pixelWorldPos, _HitPosition);
+    // The pixel is outside the brush's radius (sphere). Ignore it.
+    if (dist > _BrushRadius) return;
+    
+    // The pixel is facing away from us. Ignore it.
+    if (dot(pixelWorldNorm, _HitNormal) <= 0.1) return;
+    
+    // 4. Inject the paint directly into the specific layer of the array!
+    _MaskArray[uint3(id.x, id.y, _ActiveSlice)] = _PaintValue;
+}

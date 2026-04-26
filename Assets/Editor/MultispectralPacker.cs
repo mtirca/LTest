@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEditor;
 using System.Linq;
+using Utils;
 
 namespace Editor
 {
@@ -20,11 +21,7 @@ namespace Editor
             int depth = selectedTextures.Length; 
 
             // 3. Create the empty Array using R16 format to preserve your scientific data
-            var textureArray = new Texture2DArray(width, height, depth, TextureFormat.R16, false, true)
-                {
-                    filterMode = FilterMode.Point, // Hard pixels, no blurring
-                    wrapMode = TextureWrapMode.Clamp
-                };
+            var textureArray = TextureUtils.CreateRaw(width, height, TextureFormat.R16);
 
             // 4. Copy each image into the array one by one
             for (int i = 0; i < depth; i++)

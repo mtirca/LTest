@@ -5972,9 +5972,11 @@ MonoBehaviour:
   mainCamera: {fileID: 1495901782}
   artefact: {fileID: 1668092330}
   labelManager: {fileID: 1810114875}
+  brushCompute: {fileID: 7200000, guid: 9375860fdc27f294c942d3f8d620be0c, type: 3}
+  bakerShader: {fileID: 4800000, guid: cae6e3a6f4923e2458de9bb273934b79, type: 3}
   maskWidth: 2048
   maskHeight: 1536
-  brushRadius: 15
+  brushRadius: 0.5
   isErasing: 0
   maxLabels: 64
 --- !u!1 &1573766809
@@ -6672,7 +6674,6 @@ GameObject:
   - component: {fileID: 1668092327}
   - component: {fileID: 1668092326}
   - component: {fileID: 1668092330}
-  - component: {fileID: 1668092332}
   - component: {fileID: 1668092331}
   - component: {fileID: 1668092333}
   m_Layer: 0
@@ -6802,18 +6803,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ArtefactSystem.ArtefactTexture
   artefact: {fileID: 1668092330}
---- !u!114 &1668092332
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1668092325}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6aa379a0a4264606bb0e521b233c8491, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LabelSystem.ShaderLabelUpdater
 --- !u!114 &1668092333
 MonoBehaviour:
   m_ObjectHideFlags: 0

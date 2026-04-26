@@ -1,15 +1,17 @@
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using Utils;
 
 namespace Tools
 {
     public class LabelManager : MonoBehaviour
     {
-        [Header("References")] [SerializeField]
-        private Brush brush;
+        [Header("References")] 
+        [SerializeField] private Brush brush;
 
-        [Header("State")] public List<Label> allLabels = new();
+        [Header("State")] 
+        public List<Label> allLabels = new();
         public Label activeLabel;
 
         // Queue that holds the free label indices in the shader attributes
@@ -31,9 +33,14 @@ namespace Tools
         public Label CreateNewLabel(string labelName, Color color)
         {
             int newSliceIndex = _freeIndices.Count > 0 ? _freeIndices.Dequeue() : allLabels.Count;
+            
             Label newLabel = new Label(labelName, color, newSliceIndex, brush.maskWidth, brush.maskHeight);
             allLabels.Add(newLabel);
             activeLabel = newLabel;
+            
+            // PREEMPTIVE WIPE: Erase any residual VRAM static before the user can see it
+            Graphics.CopyTexture(TextureUtils.GetBlankR8(brush.maskWidth, brush.maskHeight), 0, 0, brush.MaskTexArray, newSliceIndex, 0);
+            
             brush.UpdateShaderVariables();
             Debug.Log($"Created and selected new label: {labelName}");
             return newLabel;
@@ -41,31 +48,13 @@ namespace Tools
 
         public void DeleteLabel(Label labelToDelete)
         {
-            if (labelToDelete == null)
-            {
-                Debug.Log("Cannot delete null label");
-                return;
-            }
-
-            if (!allLabels.Contains(labelToDelete))
-            {
-                Debug.LogWarning($"Trying to delete label {labelToDelete.name}, but it's not present in memory.");
-                return;
-            }
+            if (labelToDelete == null || !allLabels.Contains(labelToDelete)) return;
 
             allLabels.Remove(labelToDelete);
-
-            // Delete the slice on the GPU
-            Color32[] blankPixels = new Color32[brush.maskWidth * brush.maskHeight];
-            for (int i = 0; i < blankPixels.Length; i++)
-            {
-                blankPixels[i] = new Color32(0, 0, 0, 0);
-            }
-
             _freeIndices.Enqueue(labelToDelete.sliceIndex);
-            
-            brush.MaskTexArray.SetPixels32(blankPixels, labelToDelete.sliceIndex);
-            brush.MaskTexArray.Apply();
+
+            // ERASE FROM GPU: Instantly copy the blank texture over the specific Z-slice in VRAM
+            Graphics.CopyTexture(TextureUtils.GetBlankR8(brush.maskWidth, brush.maskHeight), 0, 0, brush.MaskTexArray, labelToDelete.sliceIndex, 0);
 
             brush.UpdateShaderVariables();
 
@@ -75,30 +64,37 @@ namespace Tools
             }
         }
 
-
         /// <summary>
-        /// Saves the labels' metadata in a JSON file and saves the labels' textures.
+        /// Saves labels to JSON on disk and grabs the textures from VRAM, copies them to RAM and saves them on disk.
         /// </summary>
         public void SaveSession()
         {
-            // Save the Metadata to JSON
             Labels db = new Labels { labels = allLabels };
-            string json = JsonUtility.ToJson(db, true);
-            File.WriteAllText(JsonPath, json);
+            File.WriteAllText(JsonPath, JsonUtility.ToJson(db, true));
 
-            // Save individual masks
-            Texture2D tempTex = new Texture2D(brush.maskWidth, brush.maskHeight, TextureFormat.R8, false, true);
+            // We need a 2D RenderTexture to extract slices, and an RGB24 Texture2D to encode to PNG
+            RenderTexture sliceExtractionRT = new RenderTexture(brush.maskWidth, brush.maskHeight, 0, RenderTextureFormat.R8);
+            Texture2D exportTex = TextureUtils.CreateRaw(brush.maskWidth, brush.maskHeight, TextureFormat.RGB24);
+
             foreach (Label label in allLabels)
             {
-                tempTex.SetPixels32(label.Pixels);
-                byte[] pngData = tempTex.EncodeToPNG();
+                // 1. Copy the specific 3D slice out of the Array into the flat 2D RenderTexture
+                Graphics.CopyTexture(brush.MaskTexArray, label.sliceIndex, 0, sliceExtractionRT, 0, 0);
 
-                File.WriteAllBytes(ComputeLabelPath(label.id), pngData);
+                // 2. Download the VRAM from the 2D RenderTexture into the CPU Texture2D
+                RenderTexture.active = sliceExtractionRT;
+                exportTex.ReadPixels(new Rect(0, 0, brush.maskWidth, brush.maskHeight), 0, 0);
+                exportTex.Apply();
+
+                // 3. Encode to disk
+                File.WriteAllBytes(ComputeLabelPath(label.id), exportTex.EncodeToPNG());
             }
 
-            Destroy(tempTex);
+            // Cleanup
+            RenderTexture.active = null;
+            Destroy(sliceExtractionRT);
+            Destroy(exportTex);
         }
-
 
         /// <summary>
         /// Loads the labels' metadata from the JSON file and the labels' textures from disk.
@@ -108,8 +104,7 @@ namespace Tools
             // Load labels from disk
             if (File.Exists(JsonPath))
             {
-                string json = File.ReadAllText(JsonPath);
-                Labels db = JsonUtility.FromJson<Labels>(json);
+                Labels db = JsonUtility.FromJson<Labels>(File.ReadAllText(JsonPath));
                 allLabels = db.labels;
 
                 if (allLabels.Count > 0)
@@ -125,31 +120,35 @@ namespace Tools
                 CreateNewLabel("Red", new Color(1, 0, 0, 1));
             }
 
-            // Load PNGs back into the labels
+            // Texture used to match the format of the GPU Array before copying
+            Texture2D formatMatcherTex = TextureUtils.CreateRaw(brush.maskWidth, brush.maskHeight, TextureFormat.R8);
+
             foreach (Label label in allLabels)
             {
                 string labelMaskPath = ComputeLabelPath(label.id);
                 if (File.Exists(labelMaskPath))
                 {
-                    Texture2D tempTex = new Texture2D(2, 2);
-                    byte[] pngData = File.ReadAllBytes(labelMaskPath);
-                    tempTex.LoadImage(pngData);
-                    label.Pixels = tempTex.GetPixels32();
-                    Destroy(tempTex);
+                    // 1. Load the PNG from disk into a temporary texture (LoadImage creates an RGBA texture)
+                    Texture2D tempLoadedPng = new Texture2D(2, 2);
+                    tempLoadedPng.LoadImage(File.ReadAllBytes(labelMaskPath));
+                    
+                    // 2. Transfer pixels to our R8 format matcher
+                    formatMatcherTex.SetPixels32(tempLoadedPng.GetPixels32());
+                    formatMatcherTex.Apply();
+                    
+                    // 3. Upload instantly to the GPU array slice
+                    Graphics.CopyTexture(formatMatcherTex, 0, 0, brush.MaskTexArray, label.sliceIndex, 0);
+                    
+                    Destroy(tempLoadedPng);
                 }
                 else
                 {
-                    Debug.LogWarning($"Missing PNG for label {label.name}. Generating blank mask.");
-                    label.Pixels = new Color32[brush.maskWidth * brush.maskHeight];
-                    for (int i = 0; i < label.Pixels.Length; i++)
-                    {
-                        label.Pixels[i] = new Color32(0, 0, 0, 0);
-                    }
+                    // If missing, upload blank
+                    Graphics.CopyTexture(TextureUtils.GetBlankR8(brush.maskWidth, brush.maskHeight), 0, 0, brush.MaskTexArray, label.sliceIndex, 0);
                 }
-                brush.MaskTexArray.SetPixels32(label.Pixels, label.sliceIndex);
             }
-
-            brush.MaskTexArray.Apply();
+            
+            Destroy(formatMatcherTex);
             brush.UpdateShaderVariables();
         }
 
