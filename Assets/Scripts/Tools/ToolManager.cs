@@ -10,6 +10,10 @@ namespace Tools
         [SerializeField] private Brush brush;
         [SerializeField] private CursorManager cursorManager;
 
+        [Header("UI Panels")]
+        [SerializeField] private GameObject brushUIPanel;
+        [SerializeField] private GameObject samplerUIPanel;
+        
         private Tool _currentTool = Tool.None;
 
         private void Start()
@@ -41,6 +45,9 @@ namespace Tools
 
             DisableAllTools();
 
+            samplerUIPanel.SetActive(_currentTool == Tool.Sampler);
+            brushUIPanel.SetActive(_currentTool == Tool.Brush);
+            
             switch (_currentTool)
             {
                 case Tool.Sampler:

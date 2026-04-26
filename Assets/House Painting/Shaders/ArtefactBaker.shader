@@ -2,7 +2,9 @@ Shader "Hidden/ArtefactBaker"
 {
     SubShader
     {
-        Cull Off // Very important: don't hide the back of the triangles!
+        // Since this shader isn't conventional (no camera, no distance), we want to disable optimizations such as deleting
+        // triangles based on things such as culling, or their z-depth. This shader bakes my 3D artefact into a 2D plane.
+        Cull Off
         ZWrite Off
         ZTest Always
 

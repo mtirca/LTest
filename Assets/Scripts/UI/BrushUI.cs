@@ -26,7 +26,7 @@ namespace UI
         private readonly Dictionary<string, UILabel> _uiLabels = new();
         private UILabel _activeUILabel;
 
-        private void Start()
+        private void OnEnable()
         {
             // Initialize UI for any labels loaded from the JSON save file
             RefreshAllUILabels();
@@ -167,10 +167,12 @@ namespace UI
             // 2. Use our safe array-shifting delete method in the manager
             labelManager.DeleteLabel(labelToDelete);
             
-            // 3. Ensure the UI isn't still "highlighting" a deleted label
-            if (labelManager.activeLabel == null && _activeUILabel == uiLabel)
+            // 3. FIX: Ensure the UI highlights the fallback label that the LabelManager selected!
+            _activeUILabel = null; // Clear the old reference
+            if (labelManager.activeLabel != null)
             {
-                _activeUILabel = null;
+                // Artificially click the new active label to trigger the red highlight
+                OnActivateButtonClick(labelManager.activeLabel.id);
             }
         }
 

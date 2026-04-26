@@ -7,6 +7,7 @@ using UnityEngine.UI;
 
 namespace UI
 {
+    //todo this functionality is old and should be deleted
     public class FreeCursorUI : MonoBehaviour
     {
         [SerializeField] private Button resetButton;

@@ -7,11 +7,10 @@ namespace Tools
 {
     public class LabelManager : MonoBehaviour
     {
-        [Header("References")] 
-        [SerializeField] private Brush brush;
+        [Header("References")] [SerializeField]
+        private Brush brush;
 
-        [Header("State")] 
-        public List<Label> allLabels = new();
+        [Header("State")] public List<Label> allLabels = new();
         public Label activeLabel;
 
         // Queue that holds the free label indices in the shader attributes
@@ -20,7 +19,7 @@ namespace Tools
         private static string SaveDirectory => Application.persistentDataPath + "/ArtefactLabels";
         private static string JsonPath => SaveDirectory + "/labels.json";
 
-        private void Start()
+        private void Awake()
         {
             if (!Directory.Exists(SaveDirectory))
             {
@@ -30,17 +29,24 @@ namespace Tools
             LoadSession();
         }
 
+        private void OnApplicationQuit()
+        {
+            Debug.Log("Auto-saving Artefact Session before quitting...");
+            SaveSession();
+        }
+
         public Label CreateNewLabel(string labelName, Color color)
         {
             int newSliceIndex = _freeIndices.Count > 0 ? _freeIndices.Dequeue() : allLabels.Count;
-            
+
             Label newLabel = new Label(labelName, color, newSliceIndex, brush.maskWidth, brush.maskHeight);
             allLabels.Add(newLabel);
             activeLabel = newLabel;
-            
+
             // PREEMPTIVE WIPE: Erase any residual VRAM static before the user can see it
-            Graphics.CopyTexture(TextureUtils.GetBlankR8(brush.maskWidth, brush.maskHeight), 0, 0, brush.MaskTexArray, newSliceIndex, 0);
-            
+            Graphics.CopyTexture(TextureUtils.GetBlankR8(brush.maskWidth, brush.maskHeight), 0, 0, brush.MaskTexArray,
+                newSliceIndex, 0);
+
             brush.UpdateShaderVariables();
             Debug.Log($"Created and selected new label: {labelName}");
             return newLabel;
@@ -54,7 +60,8 @@ namespace Tools
             _freeIndices.Enqueue(labelToDelete.sliceIndex);
 
             // ERASE FROM GPU: Instantly copy the blank texture over the specific Z-slice in VRAM
-            Graphics.CopyTexture(TextureUtils.GetBlankR8(brush.maskWidth, brush.maskHeight), 0, 0, brush.MaskTexArray, labelToDelete.sliceIndex, 0);
+            Graphics.CopyTexture(TextureUtils.GetBlankR8(brush.maskWidth, brush.maskHeight), 0, 0,
+                brush.MaskTexArray, labelToDelete.sliceIndex, 0);
 
             brush.UpdateShaderVariables();
 
@@ -73,7 +80,8 @@ namespace Tools
             File.WriteAllText(JsonPath, JsonUtility.ToJson(db, true));
 
             // We need a 2D RenderTexture to extract slices, and an RGB24 Texture2D to encode to PNG
-            RenderTexture sliceExtractionRT = new RenderTexture(brush.maskWidth, brush.maskHeight, 0, RenderTextureFormat.R8);
+            RenderTexture sliceExtractionRT =
+                new RenderTexture(brush.maskWidth, brush.maskHeight, 0, RenderTextureFormat.R8);
             Texture2D exportTex = TextureUtils.CreateRaw(brush.maskWidth, brush.maskHeight, TextureFormat.RGB24);
 
             foreach (Label label in allLabels)
@@ -131,23 +139,24 @@ namespace Tools
                     // 1. Load the PNG from disk into a temporary texture (LoadImage creates an RGBA texture)
                     Texture2D tempLoadedPng = new Texture2D(2, 2);
                     tempLoadedPng.LoadImage(File.ReadAllBytes(labelMaskPath));
-                    
+
                     // 2. Transfer pixels to our R8 format matcher
                     formatMatcherTex.SetPixels32(tempLoadedPng.GetPixels32());
                     formatMatcherTex.Apply();
-                    
+
                     // 3. Upload instantly to the GPU array slice
                     Graphics.CopyTexture(formatMatcherTex, 0, 0, brush.MaskTexArray, label.sliceIndex, 0);
-                    
+
                     Destroy(tempLoadedPng);
                 }
                 else
                 {
                     // If missing, upload blank
-                    Graphics.CopyTexture(TextureUtils.GetBlankR8(brush.maskWidth, brush.maskHeight), 0, 0, brush.MaskTexArray, label.sliceIndex, 0);
+                    Graphics.CopyTexture(TextureUtils.GetBlankR8(brush.maskWidth, brush.maskHeight), 0, 0,
+                        brush.MaskTexArray, label.sliceIndex, 0);
                 }
             }
-            
+
             Destroy(formatMatcherTex);
             brush.UpdateShaderVariables();
         }

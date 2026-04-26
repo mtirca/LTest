@@ -61,6 +61,16 @@ namespace Tools
             BakeSpatialData();
         }
 
+        private void OnEnable()
+        {
+            UpdateShaderVariables();
+        }
+
+        private void OnDisable()
+        {
+            _artefactRenderer.material.SetFloat(ActiveCountID, 0);
+        }
+        
         private void InitializeGPUArrays()
         {
             MaskTexArray = new RenderTexture(maskWidth, maskHeight, 0, RenderTextureFormat.R8)
