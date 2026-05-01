@@ -5,61 +5,13 @@ namespace UI
 {
     public class SamplerUI : MonoBehaviour
     {
-        [Header("Chart References")] [SerializeField]
-        private LineChart spectralChart;
+        [SerializeField] private ChartPlotter plotter;
 
         private XAxis _cachedXAxis;
 
         private void Start()
         {
-            spectralChart.RemoveData();
-            spectralChart.EnsureChartComponent<Title>().show = false;
-            spectralChart.EnsureChartComponent<Tooltip>().show = true;
-
-            _cachedXAxis = spectralChart.EnsureChartComponent<XAxis>();
-            _cachedXAxis.axisName.name = "Wavelength (nm)";
-            _cachedXAxis.axisName.show = true;
-            _cachedXAxis.type = Axis.AxisType.Category;
-            //todo doesnt work
-            _cachedXAxis.axisLabel.showStartLabel = true;
-            _cachedXAxis.axisLabel.showEndLabel = true;
-
-            var yAxis = spectralChart.EnsureChartComponent<YAxis>();
-            yAxis.axisName.name = "Relative Intensity (%)";
-            yAxis.axisName.show = true;
-            yAxis.type = Axis.AxisType.Value;
-            yAxis.minMaxType = Axis.AxisMinMaxType.Custom;
-            yAxis.min = 0;
-            yAxis.max = 100;
-            yAxis.axisLabel.show = true;
-            yAxis.axisLabel.formatter = "{value}%";
-        }
-
-        /// <summary>
-        /// Plots the data.
-        /// </summary>
-        /// <param name="bandValues">The values of the pixel to plot, one for each band.</param>
-        /// <param name="wavelengths">The wavelengths of the bands.</param>
-        public void SetData(float[] bandValues, int[] wavelengths = null)
-        {
-            spectralChart.ClearData();
-            spectralChart.AddSerie<Line>("Spectral Curve");
-
-            _cachedXAxis.data.Clear();
-
-            for (int i = 0; i < bandValues.Length; i++)
-            {
-                spectralChart.AddData(0, i, bandValues[i]);
-
-                if (wavelengths != null && i < wavelengths.Length)
-                {
-                    _cachedXAxis.data.Add(wavelengths[i].ToString());
-                }
-                else
-                {
-                    _cachedXAxis.data.Add($"Band {i}");
-                }
-            }
+            plotter.InitializeChart();
         }
 
         /// <summary>
@@ -80,7 +32,8 @@ namespace UI
                 floatValues[i] = percentage;
             }
 
-            SetData(floatValues, wavelengths);
+            // Using Cyan as a default "Sampling" color
+            plotter.PlotSingleCurve("Sample Point", floatValues, wavelengths, Color.cyan);
         }
     }
 }

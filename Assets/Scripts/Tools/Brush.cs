@@ -18,8 +18,6 @@ namespace Tools
         public Shader bakerShader;
 
         [Header("Brush Settings")] 
-        public int maskWidth = 2048;
-        public int maskHeight = 1536;
         public float brushRadius = 0.5f;
         public bool isErasing;
 
@@ -27,6 +25,8 @@ namespace Tools
         public int maxLabels = 64;
 
         // GPU Buffers
+        // Tex2DArray, where each slice contains that label's paint, as R8. So if on slice L, pixel P is colored with 1.0f,
+        // then pixel P is labeled with label L
         public RenderTexture MaskTexArray { get; private set; }
         private RenderTexture _positionMap;
         private RenderTexture _normalMap;
@@ -73,23 +73,29 @@ namespace Tools
         
         private void InitializeGPUArrays()
         {
-            MaskTexArray = new RenderTexture(maskWidth, maskHeight, 0, RenderTextureFormat.R8)
+            RenderTextureDescriptor desc = new RenderTextureDescriptor(artefact.MSTex.width, artefact.MSTex.height, RenderTextureFormat.R8)
+                {
+                    dimension = UnityEngine.Rendering.TextureDimension.Tex2DArray,
+                    volumeDepth = maxLabels,
+                    enableRandomWrite = true,
+                    sRGB = false,
+                    useMipMap = false,
+                    autoGenerateMips = false
+                };
+            MaskTexArray = new RenderTexture(desc)
             {
-                dimension = UnityEngine.Rendering.TextureDimension.Tex2DArray,
-                volumeDepth = maxLabels,
-                enableRandomWrite = true,
                 filterMode = FilterMode.Point
             };
             MaskTexArray.Create();
 
             // Setup Spatial Maps for the Baker
-            _positionMap = new RenderTexture(maskWidth, maskHeight, 0, RenderTextureFormat.ARGBFloat)
+            _positionMap = new RenderTexture(artefact.MSTex.width, artefact.MSTex.height, 0, RenderTextureFormat.ARGBFloat)
                 {
                     enableRandomWrite = true
                 };
             _positionMap.Create();
 
-            _normalMap = new RenderTexture(maskWidth, maskHeight, 0, RenderTextureFormat.ARGBFloat)
+            _normalMap = new RenderTexture(artefact.MSTex.width, artefact.MSTex.height, 0, RenderTextureFormat.ARGBFloat)
                 {
                     enableRandomWrite = true
                 };
@@ -161,11 +167,11 @@ namespace Tools
             
             // Sync with your Label Manager
             brushCompute.SetInt(ActiveSlice, labelManager.activeLabel.sliceIndex);
-            brushCompute.SetInts(MaskResolution, maskWidth, maskHeight);
+            brushCompute.SetInts(MaskResolution, artefact.MSTex.width, artefact.MSTex.height);
             
             // Dispatch
-            int threadGroupsX = Mathf.CeilToInt(maskWidth / 8.0f);
-            int threadGroupsY = Mathf.CeilToInt(maskHeight / 8.0f);
+            int threadGroupsX = Mathf.CeilToInt(artefact.MSTex.width / 8.0f);
+            int threadGroupsY = Mathf.CeilToInt(artefact.MSTex.height / 8.0f);
             brushCompute.Dispatch(_computeKernel, threadGroupsX, threadGroupsY, 1);
         }
         
@@ -190,6 +196,28 @@ namespace Tools
             _paletteTexture.Apply();
         }
 
+        //todo delete
+        public int CountPaintedPixels(int sliceIndex)
+        {
+            // 1. Create a temporary CPU-side texture
+            Texture2D temp = new Texture2D(MaskTexArray.width, MaskTexArray.height, TextureFormat.R8, false);
+    
+            // 2. Copy the GPU slice to the CPU
+            RenderTexture previous = RenderTexture.active;
+            Graphics.SetRenderTarget(MaskTexArray, 0, CubemapFace.Unknown, sliceIndex);
+            temp.ReadPixels(new Rect(0, 0, MaskTexArray.width, MaskTexArray.height), 0, 0);
+            temp.Apply();
+            RenderTexture.active = previous;
+
+            // 3. Count how many pixels aren't black (0)
+            Color32[] pixels = temp.GetPixels32();
+            int count = 0;
+            foreach (var p in pixels) if (p.r > 0) count++;
+
+            Destroy(temp);
+            return count;
+        }
+        
         private void OnDestroy()
         {
             if (MaskTexArray != null) MaskTexArray.Release();

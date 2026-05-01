@@ -1,30 +1,40 @@
 using System.Collections.Generic;
 using System.Linq;
+using Analysis;
 using ArtefactSystem;
 using TMPro;
 using Tools;
 using UnityEngine;
 using UnityEngine.UI;
+using Random = UnityEngine.Random;
 
 namespace UI
 {
+    [RequireComponent(typeof(LabelHistogramUI))]
     public class BrushUI : MonoBehaviour
     {
-        [Header("References")]
-        [SerializeField] private GameObject labelPrefab;
+        [Header("References")] [SerializeField]
+        private GameObject labelPrefab;
+
         [SerializeField] private Transform contentHolder;
         [SerializeField] private Artefact artefact;
         [SerializeField] private Brush brush;
         [SerializeField] private LabelManager labelManager;
-        [SerializeField] private HistogramUI histogramUI;
-        
-        [Header("Toggles")]
-        [SerializeField] private Toggle brushToggle;
+        [SerializeField] private SpectralAnalyzer analyzer;
+
+        private LabelHistogramUI _labelHistogramUI;
+
+        [Header("Toggles")] [SerializeField] private Toggle brushToggle;
         [SerializeField] private Toggle eraserToggle;
-        
+
         // Maps the Label ID to the UI wrapper
         private readonly Dictionary<string, UILabel> _uiLabels = new();
         private UILabel _activeUILabel;
+
+        private void Awake()
+        {
+            _labelHistogramUI = GetComponent<LabelHistogramUI>();
+        }
 
         private void OnEnable()
         {
@@ -42,6 +52,7 @@ namespace UI
             {
                 Destroy(kvp.Value.Object);
             }
+
             _uiLabels.Clear();
 
             foreach (var label in labelManager.allLabels)
@@ -50,16 +61,22 @@ namespace UI
             }
         }
 
-        public void OnPaintToggled()
+        public void OnPaintToggled(bool isOn)
         {
-            brush.isErasing = false;
+            if (isOn)
+            {
+                brush.isErasing = false;
+            }
         }
 
-        public void OnEraserToggled()
+        public void OnEraserToggled(bool isOn)
         {
-            brush.isErasing = true;
+            if (isOn)
+            {
+                brush.isErasing = true;
+            }
         }
-        
+
         private void AddUILabel(Label label)
         {
             var uiLabel = new UILabel(labelPrefab, contentHolder)
@@ -68,26 +85,39 @@ namespace UI
                 Description = { text = label.description },
                 Color = { color = ToUIColor(label.color) },
                 ColorField = { text = "#" + ColorUtility.ToHtmlStringRGB(label.color) },
-                VisibleToggle = { isOn = label.visible } 
+                VisibleToggle = { isOn = label.visible }
             };
 
             // Setup Listeners
-            uiLabel.ColorField.onValueChanged.AddListener(delegate { OnColorFieldChanged(uiLabel.ColorField, uiLabel.Color); });
-            uiLabel.ColorField.onValueChanged.AddListener(delegate { EnsureHashPrefix(uiLabel.ColorField, uiLabel.Color); });
-            
-            uiLabel.DeleteButton.onClick.AddListener(delegate { OnDeleteButtonClick(label); });
-            uiLabel.VisibleToggle.onValueChanged.AddListener(delegate { OnVisibleToggleChanged(uiLabel.VisibleToggle, label); });
-            
-            uiLabel.ApplyButton.onClick.AddListener(delegate { 
-                OnApplyButtonClick(label, uiLabel.Name.text, uiLabel.Description.text, uiLabel.ColorField.text); 
+            uiLabel.ColorField.onValueChanged.AddListener(delegate
+            {
+                OnColorFieldChanged(uiLabel.ColorField, uiLabel.Color);
             });
-            
+            uiLabel.ColorField.onValueChanged.AddListener(delegate
+            {
+                EnsureHashPrefix(uiLabel.ColorField, uiLabel.Color);
+            });
+
+            uiLabel.DeleteButton.onClick.AddListener(delegate { OnDeleteButtonClick(label); });
+            uiLabel.VisibleToggle.onValueChanged.AddListener(delegate
+            {
+                OnVisibleToggleChanged(uiLabel.VisibleToggle, label);
+            });
+
+            uiLabel.ApplyButton.onClick.AddListener(delegate
+            {
+                OnApplyButtonClick(label, uiLabel.Name.text, uiLabel.Description.text, uiLabel.ColorField.text);
+            });
+
             uiLabel.ActivateButton.onClick.AddListener(delegate { OnActivateButtonClick(label.id); });
-            //TODO
-            // uiLabel.GraphButton.onClick.AddListener(delegate { histogramUI.CreateWindow(label.id); });
+            uiLabel.GraphButton.onClick.AddListener(delegate
+            {
+                List<ushort[]> signatures = analyzer.ExtractSignatures(brush.MaskTexArray, artefact.MSTex, label.sliceIndex);
+                _labelHistogramUI.PlotLabelAverage(label, signatures, artefact.Wavelengths);
+            });
 
             _uiLabels[label.id] = uiLabel;
-            
+
             // If this is the active label, highlight it immediately
             if (labelManager.activeLabel == label) OnActivateButtonClick(label.id);
         }
@@ -112,7 +142,7 @@ namespace UI
             {
                 labelManager.activeLabel = labelManager.allLabels.Find(l => l.id == labelId);
                 _activeUILabel = uiLabel;
-                
+
                 var img = _activeUILabel.Object.GetComponent<Image>();
                 img.color = new Color32(255, 0, 0, 100);
             }
@@ -122,10 +152,10 @@ namespace UI
         {
             // Create random color for the new label
             Color randomColor = Random.ColorHSV(0f, 1f, 0.8f, 1f, 0.8f, 1f);
-            
+
             // Generate the data
             Label newLabel = labelManager.CreateNewLabel("New Label", randomColor);
-            
+
             // Instantiate the UI
             AddUILabel(newLabel);
         }
@@ -166,7 +196,7 @@ namespace UI
 
             // 2. Use our safe array-shifting delete method in the manager
             labelManager.DeleteLabel(labelToDelete);
-            
+
             // 3. FIX: Ensure the UI highlights the fallback label that the LabelManager selected!
             _activeUILabel = null; // Clear the old reference
             if (labelManager.activeLabel != null)
@@ -202,6 +232,7 @@ namespace UI
             {
                 newColor = Color.white;
             }
+
             newColor.a = 1;
             colorImage.color = newColor;
         }

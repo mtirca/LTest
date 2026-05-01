@@ -39,12 +39,12 @@ namespace Tools
         {
             int newSliceIndex = _freeIndices.Count > 0 ? _freeIndices.Dequeue() : allLabels.Count;
 
-            Label newLabel = new Label(labelName, color, newSliceIndex, brush.maskWidth, brush.maskHeight);
+            Label newLabel = new Label(labelName, color, newSliceIndex, brush.MaskTexArray.width, brush.MaskTexArray.height);
             allLabels.Add(newLabel);
             activeLabel = newLabel;
 
             // PREEMPTIVE WIPE: Erase any residual VRAM static before the user can see it
-            Graphics.CopyTexture(TextureUtils.GetBlankR8(brush.maskWidth, brush.maskHeight), 0, 0, brush.MaskTexArray,
+            Graphics.CopyTexture(TextureUtils.GetBlankR8(brush.MaskTexArray.width, brush.MaskTexArray.height), 0, 0, brush.MaskTexArray,
                 newSliceIndex, 0);
 
             brush.UpdateShaderVariables();
@@ -60,7 +60,7 @@ namespace Tools
             _freeIndices.Enqueue(labelToDelete.sliceIndex);
 
             // ERASE FROM GPU: Instantly copy the blank texture over the specific Z-slice in VRAM
-            Graphics.CopyTexture(TextureUtils.GetBlankR8(brush.maskWidth, brush.maskHeight), 0, 0,
+            Graphics.CopyTexture(TextureUtils.GetBlankR8(brush.MaskTexArray.width, brush.MaskTexArray.height), 0, 0,
                 brush.MaskTexArray, labelToDelete.sliceIndex, 0);
 
             brush.UpdateShaderVariables();
@@ -81,8 +81,8 @@ namespace Tools
 
             // We need a 2D RenderTexture to extract slices, and an RGB24 Texture2D to encode to PNG
             RenderTexture sliceExtractionRT =
-                new RenderTexture(brush.maskWidth, brush.maskHeight, 0, RenderTextureFormat.R8);
-            Texture2D exportTex = TextureUtils.CreateRaw(brush.maskWidth, brush.maskHeight, TextureFormat.RGB24);
+                new RenderTexture(brush.MaskTexArray.width, brush.MaskTexArray.height, 0, RenderTextureFormat.R8);
+            Texture2D exportTex = TextureUtils.CreateRaw(brush.MaskTexArray.width, brush.MaskTexArray.height, TextureFormat.RGB24);
 
             foreach (Label label in allLabels)
             {
@@ -91,7 +91,7 @@ namespace Tools
 
                 // 2. Download the VRAM from the 2D RenderTexture into the CPU Texture2D
                 RenderTexture.active = sliceExtractionRT;
-                exportTex.ReadPixels(new Rect(0, 0, brush.maskWidth, brush.maskHeight), 0, 0);
+                exportTex.ReadPixels(new Rect(0, 0, brush.MaskTexArray.width, brush.MaskTexArray.height), 0, 0);
                 exportTex.Apply();
 
                 // 3. Encode to disk
@@ -129,7 +129,7 @@ namespace Tools
             }
 
             // Texture used to match the format of the GPU Array before copying
-            Texture2D formatMatcherTex = TextureUtils.CreateRaw(brush.maskWidth, brush.maskHeight, TextureFormat.R8);
+            Texture2D formatMatcherTex = TextureUtils.CreateRaw(brush.MaskTexArray.width, brush.MaskTexArray.height, TextureFormat.R8);
 
             foreach (Label label in allLabels)
             {
@@ -152,7 +152,7 @@ namespace Tools
                 else
                 {
                     // If missing, upload blank
-                    Graphics.CopyTexture(TextureUtils.GetBlankR8(brush.maskWidth, brush.maskHeight), 0, 0,
+                    Graphics.CopyTexture(TextureUtils.GetBlankR8(brush.MaskTexArray.width, brush.MaskTexArray.height), 0, 0,
                         brush.MaskTexArray, label.sliceIndex, 0);
                 }
             }
