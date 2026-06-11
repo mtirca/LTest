@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using ArtefactSystem;
 using UnityEngine;
 using Utils;
 
@@ -10,6 +11,8 @@ namespace Tools
         [Header("References")] [SerializeField]
         private Brush brush;
 
+        [SerializeField] private Artefact artefact;
+
         [Header("State")] public List<Label> allLabels = new();
         public Label activeLabel;
 
@@ -18,6 +21,10 @@ namespace Tools
 
         private static string SaveDirectory => Application.persistentDataPath + "/ArtefactLabels";
         private static string JsonPath => SaveDirectory + "/labels.json";
+
+        private static readonly int RedBandID = Shader.PropertyToID("_RedBand");
+        private static readonly int GreenBandID = Shader.PropertyToID("_GreenBand");
+        private static readonly int BlueBandID = Shader.PropertyToID("_BlueBand");
 
         private void Awake()
         {
@@ -39,17 +46,30 @@ namespace Tools
         {
             int newSliceIndex = _freeIndices.Count > 0 ? _freeIndices.Dequeue() : allLabels.Count;
 
-            Label newLabel = new Label(labelName, color, newSliceIndex, brush.MaskTexArray.width, brush.MaskTexArray.height);
+            // Capture the current band settings from the Artefact
+            int rBand = (int)artefact.GetComponent<Renderer>().material.GetFloat(RedBandID);
+            int gBand = (int)artefact.GetComponent<Renderer>().material.GetFloat(GreenBandID);
+            int bBand = (int)artefact.GetComponent<Renderer>().material.GetFloat(BlueBandID);
+
+            Label newLabel = new Label(labelName, color, newSliceIndex, rBand, gBand, bBand);
+
             allLabels.Add(newLabel);
-            activeLabel = newLabel;
+            ActivateLabel(newLabel);
 
             // PREEMPTIVE WIPE: Erase any residual VRAM static before the user can see it
-            Graphics.CopyTexture(TextureUtils.GetBlankR8(brush.MaskTexArray.width, brush.MaskTexArray.height), 0, 0, brush.MaskTexArray,
+            Graphics.CopyTexture(TextureUtils.GetBlankR8(brush.MaskTexArray.width, brush.MaskTexArray.height), 0, 0,
+                brush.MaskTexArray,
                 newSliceIndex, 0);
 
             brush.UpdateShaderVariables();
             Debug.Log($"Created and selected new label: {labelName}");
             return newLabel;
+        }
+
+        public void ActivateLabel(Label label)
+        {
+            activeLabel = label;
+            artefact.SetRGBBands(label.rBandIndex, label.gBandIndex, label.bBandIndex);
         }
 
         public void DeleteLabel(Label labelToDelete)
@@ -67,7 +87,14 @@ namespace Tools
 
             if (activeLabel == labelToDelete)
             {
-                activeLabel = allLabels.Count > 0 ? allLabels[0] : null;
+                if (allLabels.Count > 0)
+                {
+                    ActivateLabel(allLabels[0]);
+                }
+                else
+                {
+                    activeLabel = null;
+                }
             }
         }
 
@@ -82,7 +109,8 @@ namespace Tools
             // We need a 2D RenderTexture to extract slices, and an RGB24 Texture2D to encode to PNG
             RenderTexture sliceExtractionRT =
                 new RenderTexture(brush.MaskTexArray.width, brush.MaskTexArray.height, 0, RenderTextureFormat.R8);
-            Texture2D exportTex = TextureUtils.CreateRaw(brush.MaskTexArray.width, brush.MaskTexArray.height, TextureFormat.RGB24);
+            Texture2D exportTex = TextureUtils.CreateRaw(brush.MaskTexArray.width, brush.MaskTexArray.height,
+                TextureFormat.RGB24);
 
             foreach (Label label in allLabels)
             {
@@ -117,7 +145,7 @@ namespace Tools
 
                 if (allLabels.Count > 0)
                 {
-                    activeLabel = allLabels[0];
+                    ActivateLabel(allLabels[0]);
                     InitializeFreeIndices();
                 }
             }
@@ -129,7 +157,8 @@ namespace Tools
             }
 
             // Texture used to match the format of the GPU Array before copying
-            Texture2D formatMatcherTex = TextureUtils.CreateRaw(brush.MaskTexArray.width, brush.MaskTexArray.height, TextureFormat.R8);
+            Texture2D formatMatcherTex =
+                TextureUtils.CreateRaw(brush.MaskTexArray.width, brush.MaskTexArray.height, TextureFormat.R8);
 
             foreach (Label label in allLabels)
             {
@@ -152,7 +181,8 @@ namespace Tools
                 else
                 {
                     // If missing, upload blank
-                    Graphics.CopyTexture(TextureUtils.GetBlankR8(brush.MaskTexArray.width, brush.MaskTexArray.height), 0, 0,
+                    Graphics.CopyTexture(TextureUtils.GetBlankR8(brush.MaskTexArray.width, brush.MaskTexArray.height),
+                        0, 0,
                         brush.MaskTexArray, label.sliceIndex, 0);
                 }
             }

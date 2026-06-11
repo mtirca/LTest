@@ -12,7 +12,7 @@ uint2 _MaskResolution;
 Texture2D _PositionMap;
 Texture2D _NormalMap;
 
-// --- The Output (Your Texture2DArray) ---
+// --- The Output (The Texture2DArray) ---
 // Note: "RW" stands for Read/Write. Compute shaders can directly modify this!
 RWTexture2DArray<float> _MaskArray;
 

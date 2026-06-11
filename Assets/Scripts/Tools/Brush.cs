@@ -189,10 +189,12 @@ namespace Tools
             {
                 _paletteTexture.SetPixel(i, 0, Color.clear);
             }
-            foreach (var label in labelManager.allLabels.Where(label => label.visible))
+
+            if (labelManager.activeLabel != null)
             {
-                _paletteTexture.SetPixel(label.sliceIndex, 0, label.color);
+                _paletteTexture.SetPixel(labelManager.activeLabel.sliceIndex, 0, labelManager.activeLabel.color);
             }
+
             _paletteTexture.Apply();
         }
 

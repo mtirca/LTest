@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using ArtefactSystem;
 using TMPro;
+using Tools;
 using UnityEngine;
 using UnityEngine.UI;
 using Utils;
@@ -11,6 +12,7 @@ namespace UI
     {
         [Header("References")] 
         [SerializeField] private Artefact artefact;
+        [SerializeField] private LabelManager labelManager;
 
         [Header("UI Hierarchy")]
         [Tooltip("The visual panel containing the dropdowns that will be hidden/shown.")]
@@ -133,6 +135,20 @@ namespace UI
         private void PushBandsToShader()
         {
             artefact.SetRGBBands(redDropdown.value, greenDropdown.value, blueDropdown.value);
+        }
+
+        public void SetDropdownValues(int rIndex, int gIndex, int bIndex)
+        {
+            redDropdown.value = rIndex;
+            greenDropdown.value = gIndex;
+            blueDropdown.value = bIndex;
+            
+            // Disable dropdowns if a label is active
+            bool isLabelActive = labelManager.activeLabel != null;
+            redDropdown.interactable = !isLabelActive;
+            greenDropdown.interactable = !isLabelActive;
+            blueDropdown.interactable = !isLabelActive;
+            resetButton.interactable = !isLabelActive;
         }
     }
 }

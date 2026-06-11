@@ -12,7 +12,6 @@ namespace UI
         public Image Color => Object.transform.Find("Color").GetComponent<Image>();
         public TMP_InputField ColorField => Object.transform.Find("ColorField").GetComponent<TMP_InputField>();
         public Button DeleteButton => Object.transform.Find("DeleteButton").GetComponent<Button>();
-        public Toggle VisibleToggle => Object.transform.Find("VisibleToggle").GetComponent<Toggle>();
         public Button ApplyButton => Object.transform.Find("ApplyButton").GetComponent<Button>();
         public Button ActivateButton => Object.transform.Find("ActivateButton").GetComponent<Button>();
         public Button GraphButton => Object.transform.Find("GraphButton").GetComponent<Button>();

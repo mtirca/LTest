@@ -1434,7 +1434,6 @@ MonoBehaviour:
   brush: {fileID: 1537727847}
   labelManager: {fileID: 1810114875}
   analyzer: {fileID: 1810114877}
-  bandMappingUI: {fileID: 2090382741}
   brushToggle: {fileID: 1262953909}
   eraserToggle: {fileID: 1465784039}
 --- !u!114 &443877390
@@ -6617,6 +6616,7 @@ GameObject:
   - component: {fileID: 1668092327}
   - component: {fileID: 1668092326}
   - component: {fileID: 1668092330}
+  - component: {fileID: 1668092331}
   - component: {fileID: 1668092333}
   m_Layer: 0
   m_Name: Painting
@@ -6732,6 +6732,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ArtefactSystem.Artefact
   Wavelengths: 68010000720100007c01000090010000a9010000db010000f40100000d020000260200003f02000058020000710200008a020000bc020000ee020000200300005203000084030000b6030000e80300001a0400004c0400007e040000
+--- !u!114 &1668092331
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1668092325}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bdb182861eee4183af09cb9a17fe797a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ArtefactSystem.ArtefactTexture
 --- !u!114 &1668092333
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7142,7 +7154,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Tools.LabelManager
   brush: {fileID: 1537727847}
-  artefact: {fileID: 1668092330}
   allLabels: []
   activeLabel:
     id: 
@@ -7151,9 +7162,6 @@ MonoBehaviour:
     description: 
     color: {r: 0, g: 0, b: 0, a: 0}
     visible: 0
-    rBandIndex: 0
-    gBandIndex: 0
-    bBandIndex: 0
 --- !u!4 &1810114876
 Transform:
   m_ObjectHideFlags: 0
@@ -8145,7 +8153,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UI.BandMappingUI
   artefact: {fileID: 1668092330}
-  labelManager: {fileID: 1810114875}
   contentPanel: {fileID: 1635193317}
   toggleVisibilityButton: {fileID: 514387802}
   toggleButtonText: {fileID: 1437497128}

@@ -13,6 +13,10 @@ namespace UI
     [RequireComponent(typeof(LabelHistogramUI))]
     public class BrushUI : MonoBehaviour
     {
+        private static readonly int RedBand = Shader.PropertyToID("_RedBand");
+        private static readonly int GreenBand = Shader.PropertyToID("_GreenBand");
+        private static readonly int BlueBand = Shader.PropertyToID("_BlueBand");
+
         [Header("References")] [SerializeField]
         private GameObject labelPrefab;
 
@@ -21,6 +25,7 @@ namespace UI
         [SerializeField] private Brush brush;
         [SerializeField] private LabelManager labelManager;
         [SerializeField] private SpectralAnalyzer analyzer;
+        [SerializeField] private BandMappingUI bandMappingUI;
 
         private LabelHistogramUI _labelHistogramUI;
 
@@ -85,7 +90,6 @@ namespace UI
                 Description = { text = label.description },
                 Color = { color = ToUIColor(label.color) },
                 ColorField = { text = "#" + ColorUtility.ToHtmlStringRGB(label.color) },
-                VisibleToggle = { isOn = label.visible }
             };
 
             // Setup Listeners
@@ -99,10 +103,6 @@ namespace UI
             });
 
             uiLabel.DeleteButton.onClick.AddListener(delegate { OnDeleteButtonClick(label); });
-            uiLabel.VisibleToggle.onValueChanged.AddListener(delegate
-            {
-                OnVisibleToggleChanged(uiLabel.VisibleToggle, label);
-            });
 
             uiLabel.ApplyButton.onClick.AddListener(delegate
             {
@@ -112,7 +112,8 @@ namespace UI
             uiLabel.ActivateButton.onClick.AddListener(delegate { OnActivateButtonClick(label.id); });
             uiLabel.GraphButton.onClick.AddListener(delegate
             {
-                List<ushort[]> signatures = analyzer.ExtractSignatures(brush.MaskTexArray, artefact.MSTex, label.sliceIndex);
+                List<ushort[]> signatures =
+                    analyzer.ExtractSignatures(brush.MaskTexArray, artefact.MSTex, label.sliceIndex);
                 _labelHistogramUI.PlotLabelAverage(label, signatures, artefact.Wavelengths);
             });
 
@@ -137,15 +138,27 @@ namespace UI
             {
                 labelManager.activeLabel = null;
                 _activeUILabel = null;
+                // Re-enable dropdowns when no label is active
+                bandMappingUI.SetDropdownValues(
+                    (int)artefact.GetComponent<Renderer>().material.GetFloat(RedBand),
+                    (int)artefact.GetComponent<Renderer>().material.GetFloat(GreenBand),
+                    (int)artefact.GetComponent<Renderer>().material.GetFloat(BlueBand)
+                );
             }
             else
             {
-                labelManager.activeLabel = labelManager.allLabels.Find(l => l.id == labelId);
+                var labelToActivate = labelManager.allLabels.Find(l => l.id == labelId);
+                labelManager.ActivateLabel(labelToActivate);
                 _activeUILabel = uiLabel;
 
                 var img = _activeUILabel.Object.GetComponent<Image>();
                 img.color = new Color32(255, 0, 0, 100);
+
+                bandMappingUI.SetDropdownValues(labelToActivate.rBandIndex, labelToActivate.gBandIndex,
+                    labelToActivate.bBandIndex);
             }
+            
+            brush.UpdateShaderVariables();
         }
 
         public void OnNewLabelClick()
@@ -177,15 +190,6 @@ namespace UI
             brush.UpdateShaderVariables();
         }
 
-        private void OnVisibleToggleChanged(Toggle visibleToggle, Label targetLabel)
-        {
-            // Update data
-            targetLabel.visible = visibleToggle.isOn;
-
-            // Refresh shader Palette. (If hidden, brush.UpdateShaderVariables will push Color.clear)
-            brush.UpdateShaderVariables();
-        }
-
         private void OnDeleteButtonClick(Label labelToDelete)
         {
             if (!_uiLabels.TryGetValue(labelToDelete.id, out var uiLabel)) return;
@@ -203,6 +207,16 @@ namespace UI
             {
                 // Artificially click the new active label to trigger the red highlight
                 OnActivateButtonClick(labelManager.activeLabel.id);
+            }
+            else
+            {
+                // If no label is active after deletion, re-enable dropdowns
+                bandMappingUI.SetDropdownValues(
+                    (int)artefact.GetComponent<Renderer>().material.GetFloat(RedBand),
+                    (int)artefact.GetComponent<Renderer>().material.GetFloat(GreenBand),
+                    (int)artefact.GetComponent<Renderer>().material.GetFloat(BlueBand)
+                );
+                brush.UpdateShaderVariables();
             }
         }
 
