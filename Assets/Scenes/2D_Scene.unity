@@ -6731,6 +6731,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 70366bfc54734d76ba3c8dff40920b76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ArtefactSystem.Artefact
+  artifactId: 2965db8b-6919-453f-a905-33416a87ee07
   Wavelengths: 68010000720100007c01000090010000a9010000db010000f40100000d020000260200003f02000058020000710200008a020000bc020000ee020000200300005203000084030000b6030000e80300001a0400004c0400007e040000
 --- !u!114 &1668092333
 MonoBehaviour:
@@ -7143,6 +7144,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Tools.LabelManager
   brush: {fileID: 1537727847}
   artefact: {fileID: 1668092330}
+  apiService: {fileID: 0}
   allLabels: []
   activeLabel:
     id: 
@@ -7154,6 +7156,11 @@ MonoBehaviour:
     rBandIndex: 0
     gBandIndex: 0
     bBandIndex: 0
+    version: 0
+    textureUrl: 
+  OnLabelsLoaded:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!4 &1810114876
 Transform:
   m_ObjectHideFlags: 0

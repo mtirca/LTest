@@ -157,3 +157,15 @@ sysinfo.txt
 # ME
 /Assets/Resources/kenney_crosshair-pack.meta
 /Assets/Resources/kenney_crosshair-pack
+
+# Gemini CLI Configuration
+.gemini/
+AGENTS.md
+.geminiignore
+.antigravityignore
+
+# Local agent workspace config (machine-specific paths)
+.agents/
+
+# Unity crash-recovery scene dumps
+/Assets/_Recovery/

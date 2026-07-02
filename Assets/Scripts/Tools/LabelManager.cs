@@ -1,7 +1,9 @@
+using System.Collections;
 using System.Collections.Generic;
-using System.IO;
+using API;
 using ArtefactSystem;
 using UnityEngine;
+using UnityEngine.Events;
 using Utils;
 
 namespace Tools
@@ -16,11 +18,14 @@ namespace Tools
         [Header("State")] public List<Label> allLabels = new();
         public Label activeLabel;
 
+        /// <summary>
+        /// Fired once LoadSessionAsync finishes (success or failure).
+        /// BrushUI subscribes to this to know when it is safe to build the label list UI.
+        /// </summary>
+        public UnityEvent OnLabelsLoaded = new();
+
         // Queue that holds the free label indices in the shader attributes
         private readonly Queue<int> _freeIndices = new();
-
-        private static string SaveDirectory => Application.persistentDataPath + "/ArtefactLabels";
-        private static string JsonPath => SaveDirectory + "/labels.json";
 
         private static readonly int RedBandID = Shader.PropertyToID("_RedBand");
         private static readonly int GreenBandID = Shader.PropertyToID("_GreenBand");
@@ -28,19 +33,12 @@ namespace Tools
 
         private void Awake()
         {
-            if (!Directory.Exists(SaveDirectory))
-            {
-                Directory.CreateDirectory(SaveDirectory);
-            }
-
-            LoadSession();
+            StartCoroutine(LoadSessionAsync());
         }
 
-        private void OnApplicationQuit()
-        {
-            Debug.Log("Auto-saving Artefact Session before quitting...");
-            SaveSession();
-        }
+        // ──────────────────────────────────────────────────────────────────────
+        // Label management (unchanged from original)
+        // ──────────────────────────────────────────────────────────────────────
 
         public Label CreateNewLabel(string labelName, Color color)
         {
@@ -96,100 +94,168 @@ namespace Tools
                     activeLabel = null;
                 }
             }
+
+            // Also delete from backend
+            StartCoroutine(DeleteLabelAsync(labelToDelete.id));
         }
 
-        /// <summary>
-        /// Saves labels to JSON on disk and grabs the textures from VRAM, copies them to RAM and saves them on disk.
-        /// </summary>
-        public void SaveSession()
-        {
-            Labels db = new Labels { labels = allLabels };
-            File.WriteAllText(JsonPath, JsonUtility.ToJson(db, true));
+        // ──────────────────────────────────────────────────────────────────────
+        // Backend persistence
+        // ──────────────────────────────────────────────────────────────────────
 
-            // We need a 2D RenderTexture to extract slices, and an RGB24 Texture2D to encode to PNG
-            RenderTexture sliceExtractionRT =
+        /// <summary>
+        /// Extracts the GPU mask for a single label, encodes it as PNG, and POSTs it to the
+        /// backend together with the label's metadata. Called by BrushUI when the user clicks Apply.
+        /// Updates label.version and label.textureUrl from the backend response.
+        /// </summary>
+        public void SaveLabel(Label label)
+        {
+            StartCoroutine(SaveLabelAsync(label));
+        }
+
+        private IEnumerator SaveLabelAsync(Label label)
+        {
+            // 1. Extract the GPU slice for this label into a CPU Texture2D
+            RenderTexture sliceRT =
                 new RenderTexture(brush.MaskTexArray.width, brush.MaskTexArray.height, 0, RenderTextureFormat.R8);
-            Texture2D exportTex = TextureUtils.CreateRaw(brush.MaskTexArray.width, brush.MaskTexArray.height,
-                TextureFormat.RGB24);
+            Texture2D exportTex =
+                TextureUtils.CreateRaw(brush.MaskTexArray.width, brush.MaskTexArray.height, TextureFormat.RGB24);
 
-            foreach (Label label in allLabels)
-            {
-                // 1. Copy the specific 3D slice out of the Array into the flat 2D RenderTexture
-                Graphics.CopyTexture(brush.MaskTexArray, label.sliceIndex, 0, sliceExtractionRT, 0, 0);
-
-                // 2. Download the VRAM from the 2D RenderTexture into the CPU Texture2D
-                RenderTexture.active = sliceExtractionRT;
-                exportTex.ReadPixels(new Rect(0, 0, brush.MaskTexArray.width, brush.MaskTexArray.height), 0, 0);
-                exportTex.Apply();
-
-                // 3. Encode to disk
-                File.WriteAllBytes(ComputeLabelPath(label.id), exportTex.EncodeToPNG());
-            }
-
-            // Cleanup
+            Graphics.CopyTexture(brush.MaskTexArray, label.sliceIndex, 0, sliceRT, 0, 0);
+            RenderTexture.active = sliceRT;
+            exportTex.ReadPixels(new Rect(0, 0, brush.MaskTexArray.width, brush.MaskTexArray.height), 0, 0);
+            exportTex.Apply();
             RenderTexture.active = null;
-            Destroy(sliceExtractionRT);
+
+            byte[] pngBytes = exportTex.EncodeToPNG();
+
+            Destroy(sliceRT);
             Destroy(exportTex);
+
+            // 2. Build the metadata JSON — include version so the backend can check optimistic locking
+            string metadataJson = BuildMetadataJson(label);
+
+            // 3. Upload
+            yield return LabelApiService.UploadLabel(
+                artefact.artifactId,
+                metadataJson,
+                pngBytes,
+                onSuccess: dto =>
+                {
+                    label.id = dto.id;
+                    label.version = dto.version;
+                    label.textureUrl = dto.textureUrl;
+                    Debug.Log($"[LabelManager] Saved label '{label.name}' (version={label.version}).");
+                },
+                onError: err =>
+                {
+                    Debug.LogError($"[LabelManager] Failed to save label '{label.name}': {err}");
+                }
+            );
+        }
+
+        private IEnumerator DeleteLabelAsync(string labelId)
+        {
+            yield return LabelApiService.DeleteLabel(
+                labelId,
+                onSuccess: () => Debug.Log($"[LabelManager] Deleted label '{labelId}' from backend."),
+                onError: err => Debug.LogError($"[LabelManager] Failed to delete label '{labelId}': {err}")
+            );
         }
 
         /// <summary>
-        /// Loads the labels' metadata from the JSON file and the labels' textures from disk.
+        /// Fetches all labels from the backend for this artefact, then downloads and uploads
+        /// each label's texture to the GPU. Fires OnLabelsLoaded when done.
+        /// Called once from Awake via coroutine.
         /// </summary>
-        private void LoadSession()
+        private IEnumerator LoadSessionAsync()
         {
-            // Load labels from disk
-            if (File.Exists(JsonPath))
-            {
-                Labels db = JsonUtility.FromJson<Labels>(File.ReadAllText(JsonPath));
-                allLabels = db.labels;
+            List<ArtifactLabelDto> dtos = null;
 
-                if (allLabels.Count > 0)
+            yield return LabelApiService.FetchAllLabels(
+                artefact.artifactId,
+                onSuccess: list => dtos = list,
+                onError: err => Debug.LogError($"[LabelManager] LoadSession failed: {err}")
+            );
+
+            if (dtos == null || dtos.Count == 0)
+            {
+                Debug.Log("[LabelManager] No labels found on backend.");
+                OnLabelsLoaded.Invoke();
+                yield break;
+            }
+
+            // Rebuild the in-memory label list from the backend DTOs
+            allLabels.Clear();
+            foreach (ArtifactLabelDto dto in dtos)
+            {
+                Label label = new Label(dto.name, dto.color.ToUnityColor(), dto.sliceIndex,
+                    dto.rBandIndex, dto.gBandIndex, dto.bBandIndex)
                 {
-                    ActivateLabel(allLabels[0]);
-                    InitializeFreeIndices();
-                }
-            }
-            else
-            {
-                //todo remove this later, should not have any active label and press on UI on plus to create new or sth
-                Debug.Log("No labels found on disk. Initializing a default label...");
-                CreateNewLabel("Red", new Color(1, 0, 0, 1));
+                    id = dto.id,
+                    description = dto.description,
+                    visible = dto.visible,
+                    version = dto.version,
+                    textureUrl = dto.textureUrl
+                };
+                allLabels.Add(label);
             }
 
-            // Texture used to match the format of the GPU Array before copying
+            if (allLabels.Count > 0)
+            {
+                ActivateLabel(allLabels[0]);
+                InitializeFreeIndices();
+            }
+
+            // Download each label's texture PNG and upload it to the GPU array
             Texture2D formatMatcherTex =
                 TextureUtils.CreateRaw(brush.MaskTexArray.width, brush.MaskTexArray.height, TextureFormat.R8);
 
             foreach (Label label in allLabels)
             {
-                string labelMaskPath = ComputeLabelPath(label.id);
-                if (File.Exists(labelMaskPath))
+                if (string.IsNullOrEmpty(label.textureUrl))
                 {
-                    // 1. Load the PNG from disk into a temporary texture (LoadImage creates an RGBA texture)
-                    Texture2D tempLoadedPng = new Texture2D(2, 2);
-                    tempLoadedPng.LoadImage(File.ReadAllBytes(labelMaskPath));
+                    // No texture on backend yet — upload blank slice
+                    Graphics.CopyTexture(
+                        TextureUtils.GetBlankR8(brush.MaskTexArray.width, brush.MaskTexArray.height),
+                        0, 0, brush.MaskTexArray, label.sliceIndex, 0);
+                    continue;
+                }
 
-                    // 2. Transfer pixels to our R8 format matcher
-                    formatMatcherTex.SetPixels32(tempLoadedPng.GetPixels32());
+                Texture2D downloadedTex = null;
+                yield return LabelApiService.FetchTexture(
+                    label.textureUrl,
+                    onSuccess: tex => downloadedTex = tex,
+                    onError: err =>
+                    {
+                        Debug.LogWarning($"[LabelManager] Could not fetch texture for '{label.name}': {err}");
+                    }
+                );
+
+                if (downloadedTex != null)
+                {
+                    formatMatcherTex.SetPixels32(downloadedTex.GetPixels32());
                     formatMatcherTex.Apply();
-
-                    // 3. Upload instantly to the GPU array slice
                     Graphics.CopyTexture(formatMatcherTex, 0, 0, brush.MaskTexArray, label.sliceIndex, 0);
-
-                    Destroy(tempLoadedPng);
+                    Destroy(downloadedTex);
                 }
                 else
                 {
-                    // If missing, upload blank
-                    Graphics.CopyTexture(TextureUtils.GetBlankR8(brush.MaskTexArray.width, brush.MaskTexArray.height),
-                        0, 0,
-                        brush.MaskTexArray, label.sliceIndex, 0);
+                    Graphics.CopyTexture(
+                        TextureUtils.GetBlankR8(brush.MaskTexArray.width, brush.MaskTexArray.height),
+                        0, 0, brush.MaskTexArray, label.sliceIndex, 0);
                 }
             }
 
             Destroy(formatMatcherTex);
             brush.UpdateShaderVariables();
+
+            OnLabelsLoaded.Invoke();
         }
+
+        // ──────────────────────────────────────────────────────────────────────
+        // Helpers
+        // ──────────────────────────────────────────────────────────────────────
 
         private void InitializeFreeIndices()
         {
@@ -216,9 +282,15 @@ namespace Tools
             }
         }
 
-        private static string ComputeLabelPath(string labelId)
+        /// <summary>
+        /// Builds the JSON metadata string expected by POST /api/labels/{artifactId}.
+        /// Excludes textureUrl and artifactId (set server-side); includes version for optimistic locking.
+        /// </summary>
+        private static string BuildMetadataJson(Label label)
         {
-            return SaveDirectory + $"/mask_{labelId}.png";
+            // JsonUtility serializes the full Label object, which now includes version.
+            // The backend ignores unknown fields and reads version for optimistic locking.
+            return JsonUtility.ToJson(label);
         }
     }
 }

@@ -2,6 +2,7 @@ using System.Linq;
 using ArtefactSystem;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.Rendering;
 using Utils;
 
 namespace Tools
@@ -68,14 +69,17 @@ namespace Tools
 
         private void OnDisable()
         {
-            _artefactRenderer.material.SetFloat(ActiveCountID, 0);
+            if (_artefactRenderer != null)
+            {
+                UpdateShaderVariables();
+            }
         }
         
         private void InitializeGPUArrays()
         {
             RenderTextureDescriptor desc = new RenderTextureDescriptor(artefact.MSTex.width, artefact.MSTex.height, RenderTextureFormat.R8)
                 {
-                    dimension = UnityEngine.Rendering.TextureDimension.Tex2DArray,
+                    dimension = TextureDimension.Tex2DArray,
                     volumeDepth = maxLabels,
                     enableRandomWrite = true,
                     sRGB = false,
@@ -180,9 +184,16 @@ namespace Tools
         /// </summary>
         public void UpdateShaderVariables()
         {
-            // Tell the shader the highest index we are currently using, so it doesn't loop unnecessarily (performance reasons only)
-            int highestIndex = labelManager.allLabels.Select(label => label.sliceIndex).Prepend(0).Max();
-            _artefactRenderer.material.SetFloat(ActiveCountID, highestIndex + 1);
+            if (enabled)
+            {
+                // Tell the shader the highest index we are currently using, so it doesn't loop unnecessarily (performance reasons only)
+                int highestIndex = labelManager.allLabels.Select(label => label.sliceIndex).Prepend(0).Max();
+                _artefactRenderer.material.SetFloat(ActiveCountID, highestIndex + 1);
+            }
+            else
+            {
+                _artefactRenderer.material.SetFloat(ActiveCountID, 0);
+            }
 
             // Update the Nx1 color palette
             for (int i = 0; i < maxLabels; i++)
@@ -196,28 +207,6 @@ namespace Tools
             }
 
             _paletteTexture.Apply();
-        }
-
-        //todo delete
-        public int CountPaintedPixels(int sliceIndex)
-        {
-            // 1. Create a temporary CPU-side texture
-            Texture2D temp = new Texture2D(MaskTexArray.width, MaskTexArray.height, TextureFormat.R8, false);
-    
-            // 2. Copy the GPU slice to the CPU
-            RenderTexture previous = RenderTexture.active;
-            Graphics.SetRenderTarget(MaskTexArray, 0, CubemapFace.Unknown, sliceIndex);
-            temp.ReadPixels(new Rect(0, 0, MaskTexArray.width, MaskTexArray.height), 0, 0);
-            temp.Apply();
-            RenderTexture.active = previous;
-
-            // 3. Count how many pixels aren't black (0)
-            Color32[] pixels = temp.GetPixels32();
-            int count = 0;
-            foreach (var p in pixels) if (p.r > 0) count++;
-
-            Destroy(temp);
-            return count;
         }
         
         private void OnDestroy()

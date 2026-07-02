@@ -32,8 +32,8 @@ namespace UI
         [Header("Toggles")] [SerializeField] private Toggle brushToggle;
         [SerializeField] private Toggle eraserToggle;
 
-        // Maps the Label ID to the UI wrapper
-        private readonly Dictionary<string, UILabel> _uiLabels = new();
+        // Maps the Label to its UI wrapper (keyed by reference, since label.id can change after a backend save)
+        private readonly Dictionary<Label, UILabel> _uiLabels = new();
         private UILabel _activeUILabel;
 
         private void Awake()
@@ -43,8 +43,17 @@ namespace UI
 
         private void OnEnable()
         {
-            // Initialize UI for any labels loaded from the JSON save file
+            // Subscribe for future loads, and immediately reflect whatever's already loaded.
+            // Needed because the tool panel starts disabled and toggles on/off as the user switches
+            // tools (see ToolManager.SetTool) — if it's disabled when LoadSessionAsync's one-shot
+            // OnLabelsLoaded event fires, the panel would otherwise miss it entirely.
+            labelManager.OnLabelsLoaded.AddListener(RefreshAllUILabels);
             RefreshAllUILabels();
+        }
+
+        private void OnDisable()
+        {
+            labelManager.OnLabelsLoaded.RemoveListener(RefreshAllUILabels);
         }
 
         /// <summary>
@@ -109,7 +118,7 @@ namespace UI
                 OnApplyButtonClick(label, uiLabel.Name.text, uiLabel.Description.text, uiLabel.ColorField.text);
             });
 
-            uiLabel.ActivateButton.onClick.AddListener(delegate { OnActivateButtonClick(label.id); });
+            uiLabel.ActivateButton.onClick.AddListener(delegate { OnActivateButtonClick(label); });
             uiLabel.GraphButton.onClick.AddListener(delegate
             {
                 List<ushort[]> signatures =
@@ -117,15 +126,15 @@ namespace UI
                 _labelHistogramUI.PlotLabelAverage(label, signatures, artefact.Wavelengths);
             });
 
-            _uiLabels[label.id] = uiLabel;
+            _uiLabels[label] = uiLabel;
 
             // If this is the active label, highlight it immediately
-            if (labelManager.activeLabel == label) OnActivateButtonClick(label.id);
+            if (labelManager.activeLabel == label) OnActivateButtonClick(label);
         }
 
-        private void OnActivateButtonClick(string labelId)
+        private void OnActivateButtonClick(Label label)
         {
-            if (!_uiLabels.TryGetValue(labelId, out var uiLabel)) return;
+            if (!_uiLabels.TryGetValue(label, out var uiLabel)) return;
 
             // Deactivate old label UI visually
             if (_activeUILabel?.Object)
@@ -147,17 +156,15 @@ namespace UI
             }
             else
             {
-                var labelToActivate = labelManager.allLabels.Find(l => l.id == labelId);
-                labelManager.ActivateLabel(labelToActivate);
+                labelManager.ActivateLabel(label);
                 _activeUILabel = uiLabel;
 
                 var img = _activeUILabel.Object.GetComponent<Image>();
                 img.color = new Color32(255, 0, 0, 100);
 
-                bandMappingUI.SetDropdownValues(labelToActivate.rBandIndex, labelToActivate.gBandIndex,
-                    labelToActivate.bBandIndex);
+                bandMappingUI.SetDropdownValues(label.rBandIndex, label.gBandIndex, label.bBandIndex);
             }
-            
+
             brush.UpdateShaderVariables();
         }
 
@@ -181,22 +188,25 @@ namespace UI
                 return;
             }
 
-            // Update the data strictly in RAM
+            // Update the data in RAM
             targetLabel.name = newName;
             targetLabel.description = newDesc;
             targetLabel.color = color;
 
             // Tell the brush to push the new color to the GPU
             brush.UpdateShaderVariables();
+
+            // Persist the label (metadata + current mask texture) to the backend
+            labelManager.SaveLabel(targetLabel);
         }
 
         private void OnDeleteButtonClick(Label labelToDelete)
         {
-            if (!_uiLabels.TryGetValue(labelToDelete.id, out var uiLabel)) return;
+            if (!_uiLabels.TryGetValue(labelToDelete, out var uiLabel)) return;
 
             // 1. Destroy the UI object
             Destroy(uiLabel.Object);
-            _uiLabels.Remove(labelToDelete.id);
+            _uiLabels.Remove(labelToDelete);
 
             // 2. Use our safe array-shifting delete method in the manager
             labelManager.DeleteLabel(labelToDelete);
@@ -206,7 +216,7 @@ namespace UI
             if (labelManager.activeLabel != null)
             {
                 // Artificially click the new active label to trigger the red highlight
-                OnActivateButtonClick(labelManager.activeLabel.id);
+                OnActivateButtonClick(labelManager.activeLabel);
             }
             else
             {

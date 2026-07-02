@@ -27,6 +27,9 @@ namespace ArtefactSystem
         private static readonly int GreenBandID = Shader.PropertyToID("_GreenBand");
         private static readonly int BlueBandID = Shader.PropertyToID("_BlueBand");
 
+        [Tooltip("Unique identifier for this artefact, used to scope labels on the backend. Set once in the Inspector.")]
+        public string artifactId;
+
         [Tooltip("The specific wavelengths (in nm) for each slice of the texture")]
         public int[] Wavelengths;
 
