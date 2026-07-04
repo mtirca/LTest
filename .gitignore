@@ -169,3 +169,6 @@ AGENTS.md
 
 # Unity crash-recovery scene dumps
 /Assets/_Recovery/
+
+# ScreenCaptor output
+/Screenshots/
