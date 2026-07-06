@@ -1,3 +1,4 @@
+using System.IO;
 using System.Linq;
 using ArtefactSystem;
 using UnityEngine;
@@ -208,7 +209,70 @@ namespace Tools
 
             _paletteTexture.Apply();
         }
-        
+
+        /// <summary>
+        /// Debug-only: dumps the baked position and normal maps as PNGs, for illustration purposes
+        /// (e.g. thesis figures). Right-click this component in the Inspector while in Play mode to run it.
+        /// Values are remapped into [0, 1] purely for visualization; they are not used by the app itself.
+        /// </summary>
+        [ContextMenu("Debug: Save Position/Normal Maps as PNG")]
+        private void SaveDebugMaps()
+        {
+            Bounds bounds = _artefactRenderer.bounds;
+            SaveRenderTextureAsPNG(_positionMap, "PositionMap_debug.png", bounds);
+            SaveRenderTextureAsPNG(_normalMap, "NormalMap_debug.png", null);
+        }
+
+        private static void SaveRenderTextureAsPNG(RenderTexture rt, string fileName, Bounds? worldBounds)
+        {
+            var readTex = new Texture2D(rt.width, rt.height, TextureFormat.RGBAFloat, false);
+            var prevActive = RenderTexture.active;
+            RenderTexture.active = rt;
+            readTex.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0);
+            readTex.Apply();
+            RenderTexture.active = prevActive;
+
+            Color[] pixels = readTex.GetPixels();
+            Destroy(readTex);
+
+            for (int i = 0; i < pixels.Length; i++)
+            {
+                // Empty UV space (alpha channel from the baker shader): show as black
+                if (pixels[i].a < 0.1f)
+                {
+                    pixels[i] = Color.black;
+                    continue;
+                }
+
+                if (worldBounds.HasValue)
+                {
+                    // Position map: remap world-space XYZ into [0, 1] using the artefact's bounds, purely for visualization
+                    Bounds b = worldBounds.Value;
+                    float r = Mathf.InverseLerp(b.min.x, b.max.x, pixels[i].r);
+                    float g = Mathf.InverseLerp(b.min.y, b.max.y, pixels[i].g);
+                    float bl = Mathf.InverseLerp(b.min.z, b.max.z, pixels[i].b);
+                    pixels[i] = new Color(r, g, bl, 1f);
+                }
+                else
+                {
+                    // Normal map: components are in [-1, 1], remap to [0, 1] for visualization
+                    pixels[i] = new Color(pixels[i].r * 0.5f + 0.5f, pixels[i].g * 0.5f + 0.5f, pixels[i].b * 0.5f + 0.5f, 1f);
+                }
+            }
+
+            var outTex = new Texture2D(rt.width, rt.height, TextureFormat.RGBA32, false);
+            outTex.SetPixels(pixels);
+            outTex.Apply();
+
+            string folderPath = Path.Combine(Application.dataPath, "..", "Screenshots");
+            Directory.CreateDirectory(folderPath);
+            string filePath = Path.Combine(folderPath, fileName);
+            File.WriteAllBytes(filePath, outTex.EncodeToPNG());
+
+            Debug.Log($"Saved debug map to {filePath}");
+            Destroy(outTex);
+        }
+
         private void OnDestroy()
         {
             if (MaskTexArray != null) MaskTexArray.Release();
