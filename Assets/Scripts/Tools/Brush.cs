@@ -1,6 +1,7 @@
 using System.IO;
 using System.Linq;
 using ArtefactSystem;
+using Player.Movement;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.Rendering;
@@ -10,10 +11,11 @@ namespace Tools
 {
     public class Brush : MonoBehaviour
     {
-        [Header("References")] 
+        [Header("References")]
         [SerializeField] private Camera mainCamera;
         [SerializeField] private Artefact artefact;
         [SerializeField] private LabelManager labelManager;
+        [SerializeField] private MovementManager movementManager;
 
         [Header("GPU Resources")]
         public ComputeShader brushCompute;
@@ -135,8 +137,9 @@ namespace Tools
 
         private void Update()
         {
-            //todo check sampler.cs and make the same check at the beginning
-            if (!Input.GetMouseButton(0) || EventSystem.current.IsPointerOverGameObject())
+            if (!Input.GetMouseButton(0)
+                || movementManager.Movement != Movement.None
+                || EventSystem.current.IsPointerOverGameObject())
             {
                 return;
             }
