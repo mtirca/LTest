@@ -13,7 +13,7 @@ int _MaxExpectedPixels;
 [numthreads(8, 8, 1)]
 void SpectralAverager (uint3 id : SV_DispatchThreadID)
 {
-    // Safety check: Ensure we don't read outside the texture boundaries
+    // Safety check: Ensure we don't read outside the texture bounds
     uint width, height, elements;
     MaskTex.GetDimensions(width, height, elements);
     if (id.x >= width || id.y >= height || _SliceIndex < 0 || _SliceIndex >= (int)elements)
@@ -27,7 +27,7 @@ void SpectralAverager (uint3 id : SV_DispatchThreadID)
         int index;
         InterlockedAdd(ResultCounter[0], 1, index);
         
-        // Safety clamp so we don't overflow the buffer if the user paints the whole screen
+        // Optional safety clamp
         if (index < _MaxExpectedPixels)
         {
             for(int b = 0; b < _TotalBands; b++)

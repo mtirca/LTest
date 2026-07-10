@@ -21,14 +21,14 @@ void stack_labels_float(UnityTexture2DArray mask_array, UnityTexture2D palette, 
 
     for (int i = 0; i < label_count_int; i++)
     {
-        // Sample the array slice. We use the Red channel (R) for opacity.
+        // Sample the array slice. Use the red channel for opacity.
         // 0.0f if no paint (or eraser), 1.0f if paint
         float paint_opacity = SAMPLE_TEXTURE2D_ARRAY(mask_array, mask_array.samplerstate, uv, i).r;
 
         if (paint_opacity > 0.01)
         {
-            // 2. Look up the color for this specific slice from our 64x1 Palette
-            // We add 0.5 to sample the exact center of the pixel to prevent color bleeding
+            // Look up the color for this specific slice from the 64x1 Palette
+            // Added 0.5 to sample the exact center of the pixel to prevent color bleeding
             float2 palette_uv = float2((i + 0.5) / 64.0, 0.5);
             float4 label_color = SAMPLE_TEXTURE2D(palette, palette.samplerstate, palette_uv);
 

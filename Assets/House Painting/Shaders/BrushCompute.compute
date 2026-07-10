@@ -1,6 +1,6 @@
 #pragma kernel PaintMask
 
-// --- Inputs from C# ---
+// Inputs from C#
 float3 _HitPosition;
 float3 _HitNormal;
 float _BrushRadius;
@@ -8,12 +8,12 @@ float _PaintValue;
 int _ActiveSlice;
 uint2 _MaskResolution;
 
-// --- The Baked 3D Data ---
+// The Baked 3D Data
 Texture2D _PositionMap;
 Texture2D _NormalMap;
 
-// --- The Output (The Texture2DArray) ---
-// Note: "RW" stands for Read/Write. Compute shaders can directly modify this!
+// The Output (The Texture2DArray)
+// "RW" stands for Read/Write.
 RWTexture2DArray<float> _MaskArray;
 
 [numthreads(8, 8, 1)]
